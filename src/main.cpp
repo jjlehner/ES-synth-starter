@@ -50,7 +50,10 @@ const static int32_t STEPSIZES[] = {int32_t(pow(2.0, 32.0) * 440.0 * pow(2.0, -9
                                     int32_t(pow(2., 32.) * 440. * pow(2., 0. / 12.) / 22000.),
                                     int32_t(pow(2., 32.) * 440. * pow(2., 1. / 12.) / 22000.),
                                     int32_t(pow(2., 32.) * 440. * pow(2.0, 2. / 12.) / 22000.), int32_t(0.0)};
+
 static const char* NOTES [] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "No Key"};
+
+SemaphoreHandle_t keyArrayMutex;
 
 void setRow(uint8_t rowIdx);
 
@@ -104,6 +107,9 @@ void setup() {
     setOutMuxBit(DRST_BIT, HIGH);  //Release display logic reset
     u8g2.begin();
     setOutMuxBit(DEN_BIT, HIGH);  //Enable display power supply
+
+    // Mutex for keyArray
+    keyArrayMutex = xSemaphoreCreateMutex();
 
     //Start ISR
     TIM_TypeDef *Instance = TIM1;
@@ -174,6 +180,7 @@ void sampleISR() {
 void scanKeysTask(void *pvParameters) {
     const TickType_t xFrequency = 50/portTICK_PERIOD_MS;
     TickType_t xLastWakeTime= xTaskGetTickCount();
+    xSemaphoreTake(keyArrayMutex, portMAX_DELAY);
     while (true) {
         for (size_t i = 0; i < 3; i++) {
             setRow(i);
@@ -182,6 +189,7 @@ void scanKeysTask(void *pvParameters) {
             keyArray[i] = keys;
         }
         uint16_t to_be_printed = (keyArray[0] << 4 * 2) + (keyArray[1] << 4 * 1) + keyArray[2];
+        xSemaphoreGive(keyArrayMutex);
         __atomic_store_n(&currentStepSize, STEPSIZES[decode_to_idx(to_be_printed)], __ATOMIC_RELAXED);
         vTaskDelayUntil( &xLastWakeTime, xFrequency );
     }
@@ -194,7 +202,9 @@ void displayUpdateTask(void *pvParameters) {
         //Update display
         u8g2.clearBuffer();         // clear the internal memory
         u8g2.setFont(u8g2_font_ncenB08_tr); // choose a suitable font
+        xSemaphoreTake(keyArrayMutex, portMAX_DELAY);
         uint16_t pressed_key_hex = (keyArray[0]<<4*2) + (keyArray[1]<<4*1) + keyArray[2];
+        xSemaphoreGive(keyArrayMutex);
         u8g2.setCursor(2,10);
         u8g2.print(pressed_key_hex, HEX);
         u8g2.drawStr(2,20, NOTES[decode_to_idx(pressed_key_hex)]);
