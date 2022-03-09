@@ -2,6 +2,7 @@
 #include <U8g2lib.h>
 #include <STM32FreeRTOS.h>
 #include <cstring>
+#include "ThreadSafeArray.hpp"
 
 //Pin definitions
 //Row select and enable
@@ -33,7 +34,7 @@ const int HKOE_BIT = 6;
 
 volatile int32_t currentStepSize;
 
-volatile uint8_t keyArray[7];
+ThreadSafeArray threadSafeArray;
 
 const static int32_t STEPSIZES[] = {int32_t(pow(2.0, 32.0) * 440.0 * pow(2.0, -9. / 12.) / 22000.),
                                     int32_t(pow(2.0, 32.0) * 440.0 * pow(2.0, -8. / 12.) / 22000.0),
@@ -50,7 +51,6 @@ const static int32_t STEPSIZES[] = {int32_t(pow(2.0, 32.0) * 440.0 * pow(2.0, -9
 
 static const char* NOTES [] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "No Key"};
 
-SemaphoreHandle_t keyArrayMutex;
 
 void setRow(uint8_t rowIdx);
 
@@ -105,8 +105,7 @@ void setup() {
     u8g2.begin();
     setOutMuxBit(DEN_BIT, HIGH);  //Enable display power supply
 
-    // Mutex for keyArray
-    keyArrayMutex = xSemaphoreCreateMutex();
+    threadSafeArray.initMutex();
 
     //Start ISR
     TIM_TypeDef *Instance = TIM1;
@@ -177,7 +176,7 @@ void sampleISR() {
 void scanKeysTask(__attribute__((unused)) void *pvParameters) {
     const TickType_t xFrequency = 50/portTICK_PERIOD_MS;
     TickType_t xLastWakeTime= xTaskGetTickCount();
-    xSemaphoreTake(keyArrayMutex, portMAX_DELAY);
+    std::array<uint8_t,7> keyArray{};
     while (true) {
         for (size_t i = 0; i < 3; i++) {
             setRow(i);
@@ -186,7 +185,7 @@ void scanKeysTask(__attribute__((unused)) void *pvParameters) {
             keyArray[i] = keys;
         }
         uint16_t to_be_printed = (keyArray[0] << 4 * 2) + (keyArray[1] << 4 * 1) + keyArray[2];
-        xSemaphoreGive(keyArrayMutex);
+        threadSafeArray.write(keyArray);
         __atomic_store_n(&currentStepSize, STEPSIZES[decode_to_idx(to_be_printed)], __ATOMIC_RELAXED);
         vTaskDelayUntil( &xLastWakeTime, xFrequency );
     }
@@ -199,9 +198,7 @@ void displayUpdateTask(__attribute__((unused)) void *pvParameters) {
         //Update display
         u8g2.clearBuffer();         // clear the internal memory
         u8g2.setFont(u8g2_font_ncenB08_tr); // choose a suitable font
-        xSemaphoreTake(keyArrayMutex, portMAX_DELAY);
-        uint16_t pressed_key_hex = (keyArray[0]<<4*2) + (keyArray[1]<<4*1) + keyArray[2];
-        xSemaphoreGive(keyArrayMutex);
+        uint16_t pressed_key_hex = threadSafeArray.read();
         u8g2.setCursor(2,10);
         u8g2.print(pressed_key_hex, HEX);
         u8g2.drawStr(2,20, NOTES[decode_to_idx(pressed_key_hex)]);
