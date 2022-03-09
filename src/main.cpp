@@ -1,10 +1,7 @@
 #include <Arduino.h>
 #include <U8g2lib.h>
 #include <STM32FreeRTOS.h>
-#include <string.h>
-
-//Constants
-const uint32_t interval = 100; //Display update interval
+#include <cstring>
 
 //Pin definitions
 //Row select and enable
@@ -63,8 +60,8 @@ inline uint8_t decode_to_idx(uint16_t bits);
 
 void sampleISR();
 
-[[noreturn]] void scanKeysTask(void * pvParameters);
-[[noreturn]] void displayUpdateTask(void * pvParameters);
+[[noreturn]] void scanKeysTask(__attribute__((unused)) void * pvParameters);
+[[noreturn]] void displayUpdateTask(__attribute__((unused)) void * pvParameters);
 
 //Display driver object
 U8G2_SSD1305_128X32_NONAME_F_HW_I2C u8g2(U8G2_R0);
@@ -117,20 +114,20 @@ void setup() {
     sampleTimer->setOverflow(22000, HERTZ_FORMAT);
     sampleTimer->attachInterrupt(sampleISR);
     sampleTimer->resume();
-    TaskHandle_t scanKeysHandle = NULL;
+    TaskHandle_t taskHandler = nullptr;
     xTaskCreate(scanKeysTask,/* Function that implements the task */
                 "scanKeys",/* Text name for the task */
                 64,/* Stack size in words, not bytes*/
-                NULL,/* Parameter passed into the task */
+                nullptr,/* Parameter passed into the task */
                 2,/* Task priority*/
-                &scanKeysHandle /* Pointer to store the task handle*/
+                &taskHandler /* Pointer to store the task handle*/
                 );
     xTaskCreate(displayUpdateTask,/* Function that implements the task */
                 "displayUpdate",/* Text name for the task */
                 256,/* Stack size in words, not bytes*/
-                NULL,/* Parameter passed into the task */
+                nullptr,/* Parameter passed into the task */
                 1,/* Task priority*/
-                &scanKeysHandle /* Pointer to store the task handle*/
+                &taskHandler /* Pointer to store the task handle*/
     );
     vTaskStartScheduler();
     //Initialise UART
@@ -177,7 +174,7 @@ void sampleISR() {
     analogWrite(OUTR_PIN, Vout + 128);
 }
 
-void scanKeysTask(void *pvParameters) {
+void scanKeysTask(__attribute__((unused)) void *pvParameters) {
     const TickType_t xFrequency = 50/portTICK_PERIOD_MS;
     TickType_t xLastWakeTime= xTaskGetTickCount();
     xSemaphoreTake(keyArrayMutex, portMAX_DELAY);
@@ -195,7 +192,7 @@ void scanKeysTask(void *pvParameters) {
     }
 }
 
-void displayUpdateTask(void *pvParameters) {
+void displayUpdateTask(__attribute__((unused)) void *pvParameters) {
     const TickType_t xFrequency = 100/portTICK_PERIOD_MS;
     TickType_t xLastWakeTime= xTaskGetTickCount();
     while (true) {
