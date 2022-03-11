@@ -59,7 +59,6 @@ void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
     const TickType_t xFrequency = 20 / portTICK_PERIOD_MS;
     TickType_t xLastWakeTime = xTaskGetTickCount();
     std::array<uint8_t, 7> keyArray{};
-    Knobs k3;
     while (true) {
         for (size_t i = 0; i < 7; i++) {
             setRow(i);
@@ -70,9 +69,15 @@ void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
         uint16_t to_be_printed = (keyArray[0] << 4 * 2) + (keyArray[1] << 4 * 1) + keyArray[2];
 
         bool a, b;
-
         std::tie(a, b) = Knobs::getAB(keyArray, 3);
-        __atomic_store_n(&knob3Rotation, k3.getChange(a, b), __ATOMIC_RELAXED);
+        k3.updateRotation(a,b);
+        std::tie(a, b) = Knobs::getAB(keyArray, 2);
+        k2.updateRotation(a,b);
+        std::tie(a, b) = Knobs::getAB(keyArray, 1);
+        k1.updateRotation(a,b);
+        std::tie(a, b) = Knobs::getAB(keyArray, 0);
+        k0.updateRotation(a,b);
+
         threadSafeArray.write(keyArray);
         __atomic_store_n(&currentStepSize, STEPSIZES[decode_to_idx(to_be_printed)], __ATOMIC_RELAXED);
         vTaskDelayUntil(&xLastWakeTime, xFrequency);

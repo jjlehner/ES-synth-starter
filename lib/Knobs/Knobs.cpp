@@ -6,7 +6,7 @@
 
 Knobs::Knobs() : timeSinceDirStart(millis()) {}
 
-size_t Knobs::getChange(bool newA, bool newB) {
+void Knobs::updateRotation(bool newA, bool newB) volatile {
     int rowIndex = ((uint8_t) prevB << 1) + prevA;
     int colIndex = ((uint8_t) newB << 1) + newA;
     if(millis() - timeSinceDirStart > epsilon) {
@@ -43,7 +43,9 @@ size_t Knobs::getChange(bool newA, bool newB) {
 
     prevA = newA;
     prevB = newB;
+}
 
+size_t Knobs::getRotation() volatile {
     return rotation.getInternalCounter();
 }
 

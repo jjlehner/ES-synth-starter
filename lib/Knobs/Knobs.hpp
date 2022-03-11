@@ -34,12 +34,17 @@ private:
     };
     static constexpr const unsigned long epsilon = 20;
 public:
-    static inline std::pair<bool, bool> getAB(const std::array<uint8_t, 7> &keyArray, size_t idx) {
-        bool A3 = keyArray[idx] >> 3;
-        bool B3 = (keyArray[idx] & 0x4) >> 2;
-        return std::make_pair(A3, B3);
+    static inline std::pair<bool, bool> getAB(const std::array<uint8_t, 7> &keyArray, size_t knobIdx) {
+        size_t keyArrayIdx = knobIdx > 1 ? 3 : 4;
+
+        bool topBits = knobIdx % 2;
+
+        bool A = topBits ? (keyArray[keyArrayIdx] & 0x8) : (keyArray[keyArrayIdx] & 0x2);
+        bool B = topBits ? (keyArray[keyArrayIdx] & 0x4) : (keyArray[keyArrayIdx] & 0x1);
+        return std::make_pair(A, B);
     }
     Knobs();
-    size_t getChange(bool newA, bool newB);
+    void updateRotation(bool newA, bool newB) volatile;
+    size_t getRotation() volatile;
 };
 #endif //ES_SYNTH_STARTER_KNOBS_HPP

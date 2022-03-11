@@ -6,11 +6,16 @@
 #define ES_SYNTH_STARTER_TASKS_HPP
 
 #include "ThreadSafeArray.hpp"
+#include "Knobs.hpp"
 #include <U8g2lib.h>
 
 extern ThreadSafeArray threadSafeArray;
 extern volatile int32_t currentStepSize;
-extern volatile size_t knob3Rotation;
+
+extern volatile Knobs k0;
+extern volatile Knobs k1;
+extern volatile Knobs k2;
+extern volatile Knobs k3;
 
 extern const int C0_PIN;
 extern const int C1_PIN;

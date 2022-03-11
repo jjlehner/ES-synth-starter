@@ -34,7 +34,10 @@ const int HKOE_BIT = 6;
 
 volatile int32_t currentStepSize;
 
-volatile size_t knob3Rotation;
+volatile Knobs k0;
+volatile Knobs k1;
+volatile Knobs k2;
+volatile Knobs k3;
 
 ThreadSafeArray threadSafeArray;
 
@@ -115,14 +118,16 @@ void setup() {
 
 void loop() {
     // put your main code here, to run repeatedly:
-    Serial.println(knob3Rotation);
-
+    Serial.println();
+    char bytes[14];
+    sprintf(bytes,"%d, %d, %d, %d", k3.getRotation(), k2.getRotation(), k1.getRotation(), k0.getRotation());
+    Serial.println(bytes);
 }
 
 void sampleISR() {
     static int32_t phaseAcc= 0;
     phaseAcc+= currentStepSize;
     int32_t Vout = phaseAcc >> 24;
-    Vout= Vout >> (8 -knob3Rotation/2);
+    Vout= Vout >> (8 -k3.getRotation()/2);
     analogWrite(OUTR_PIN, Vout + 128);
 }
