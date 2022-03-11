@@ -57,6 +57,9 @@ void setOutMuxBit(const uint8_t bitIdx, const bool value) {
 
 void setup() {
     // put your setup code here, to run once:
+    //Initialise UART
+    Serial.begin(9600);
+    Serial.println("Hello World");
 
     //Set pin directions
     pinMode(RA0_PIN, OUTPUT);
@@ -107,15 +110,11 @@ void setup() {
                 &displayUpdateHandler /* Pointer to store the task handle*/
     );
     vTaskStartScheduler();
-    //Initialise UART
-    Serial.begin(9600);
-    Serial.println("Hello World");
 }
 
 
 void loop() {
     // put your main code here, to run repeatedly:
-    Serial.println("?");
     Serial.println(debugOut);
 
 }

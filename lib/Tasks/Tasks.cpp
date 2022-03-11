@@ -56,7 +56,7 @@ namespace {
 }
 
 void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
-    const TickType_t xFrequency = 50 / portTICK_PERIOD_MS;
+    const TickType_t xFrequency = 20 / portTICK_PERIOD_MS;
     TickType_t xLastWakeTime = xTaskGetTickCount();
     std::array<uint8_t, 7> keyArray{};
     Knobs k3;
