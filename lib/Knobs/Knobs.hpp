@@ -32,51 +32,12 @@ private:
     };
     static constexpr const unsigned long epsilon = 20;
 public:
-    Knobs() : timeSinceDirStart(millis()) {}
-
     static inline std::pair<bool, bool> getAB(const std::array<uint8_t, 7> &keyArray, size_t idx) {
         bool A3 = keyArray[idx] >> 3;
         bool B3 = (keyArray[idx] & 0x4) >> 2;
         return std::make_pair(A3, B3);
     }
-
-    int getChange(bool newA, bool newB) {
-        int rowIndex = ((uint8_t) prevB << 1) + prevA;
-        int colIndex = ((uint8_t) newB << 1) + newA;
-        if(millis() - timeSinceDirStart > epsilon) {
-            switch (rotationDist[rowIndex][colIndex]) {
-                case RotationDist::Positive:
-                    oldChange = 1;
-                    rotation++;
-                    timeSinceDirStart = millis();
-                    break;
-                case RotationDist::Negative:
-                    oldChange = -1;
-                    rotation--;
-                    timeSinceDirStart = millis();
-                    break;
-                case RotationDist::NoChange:
-                    oldChange = 0;
-                    break;
-                case RotationDist::Impossible:
-                    rotation += 2*oldChange;
-                    break;
-            }
-        }
-        else{
-            if(rotationDist[rowIndex][colIndex] != RotationDist::NoChange){
-                timeSinceDirStart = millis();
-
-
-            }
-        }
-
-        prevA = newA;
-        prevB = newB;
-
-        return rotation;
-    }
+    Knobs();
+    int getChange(bool newA, bool newB);
 };
-
-constexpr const RotationDist Knobs::rotationDist[4][4];
 #endif //ES_SYNTH_STARTER_KNOBS_HPP
