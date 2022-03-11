@@ -34,7 +34,7 @@ const int HKOE_BIT = 6;
 
 volatile int32_t currentStepSize;
 
-volatile int debugOut;
+volatile size_t knob3Rotation;
 
 ThreadSafeArray threadSafeArray;
 
@@ -115,7 +115,7 @@ void setup() {
 
 void loop() {
     // put your main code here, to run repeatedly:
-    Serial.println(debugOut);
+    Serial.println(knob3Rotation);
 
 }
 
@@ -123,5 +123,6 @@ void sampleISR() {
     static int32_t phaseAcc= 0;
     phaseAcc+= currentStepSize;
     int32_t Vout = phaseAcc >> 24;
+    Vout= Vout >> (8 -knob3Rotation/2);
     analogWrite(OUTR_PIN, Vout + 128);
 }

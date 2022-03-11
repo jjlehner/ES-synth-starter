@@ -10,7 +10,7 @@
 
 extern ThreadSafeArray threadSafeArray;
 extern volatile int32_t currentStepSize;
-extern volatile int debugOut;
+extern volatile size_t knob3Rotation;
 
 extern const int C0_PIN;
 extern const int C1_PIN;

@@ -4,7 +4,7 @@
 
 #include "ClampedCounter.hpp"
 
-ClampedCounter::ClampedCounter() : internalCounter(8) {}
+ClampedCounter::ClampedCounter(size_t _lower, size_t _upper) : internalCounter((_upper-_lower)/2), lower(_lower), upper(_upper) {}
 
 void ClampedCounter::increment() {
     if (internalCounter == 16)

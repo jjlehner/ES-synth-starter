@@ -72,7 +72,7 @@ void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
         bool a, b;
 
         std::tie(a, b) = Knobs::getAB(keyArray, 3);
-        __atomic_store_n(&debugOut, k3.getChange(a, b), __ATOMIC_RELAXED);
+        __atomic_store_n(&knob3Rotation, k3.getChange(a, b), __ATOMIC_RELAXED);
         threadSafeArray.write(keyArray);
         __atomic_store_n(&currentStepSize, STEPSIZES[decode_to_idx(to_be_printed)], __ATOMIC_RELAXED);
         vTaskDelayUntil(&xLastWakeTime, xFrequency);

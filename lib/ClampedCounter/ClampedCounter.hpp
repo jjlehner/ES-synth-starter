@@ -10,8 +10,10 @@
 class ClampedCounter {
 private:
     size_t internalCounter;
+    size_t lower;
+    size_t upper;
 public:
-    ClampedCounter();
+    ClampedCounter(size_t _lower=0, size_t _upper=16);
     void increment();
     void decrement();
     size_t getInternalCounter();
