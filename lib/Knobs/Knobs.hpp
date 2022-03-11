@@ -9,6 +9,8 @@
 #include <utility>
 #include <array>
 #include <Arduino.h>
+#include "ClampedCounter.hpp"
+
 enum class RotationDist : int8_t {
     Negative = -1,
     Positive = +1,
@@ -21,7 +23,7 @@ private:
     bool prevA=false;
     bool prevB=false;
     int oldChange=0;
-    int rotation=0;
+    ClampedCounter rotation;
     unsigned long timeSinceDirStart;
     //Where row represents previous B,A and column represents current B,A
     static constexpr const RotationDist rotationDist[4][4] = {
@@ -38,6 +40,6 @@ public:
         return std::make_pair(A3, B3);
     }
     Knobs();
-    int getChange(bool newA, bool newB);
+    size_t getChange(bool newA, bool newB);
 };
 #endif //ES_SYNTH_STARTER_KNOBS_HPP
