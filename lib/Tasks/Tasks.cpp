@@ -6,9 +6,7 @@
 #include <Arduino.h>
 #include "STM32FreeRTOS.h"
 #include <U8g2lib.h>
-#include <array>
 #include <bitset>
-#include <cassert>
 #include "Knobs.hpp"
 
 
@@ -53,10 +51,10 @@ namespace {
     }
 
     void read(std::bitset<24> &inputs, size_t row) {
-        inputs.set(row*4+3, digitalRead(C0_PIN));
-        inputs.set(row*4+2, digitalRead(C1_PIN));
-        inputs.set(row*4+1, digitalRead(C2_PIN));
-        inputs.set(row*4, digitalRead(C3_PIN));
+        inputs.set(row * 4 + 3, digitalRead(C0_PIN));
+        inputs.set(row * 4 + 2, digitalRead(C1_PIN));
+        inputs.set(row * 4 + 1, digitalRead(C2_PIN));
+        inputs.set(row * 4, digitalRead(C3_PIN));
     }
 
     void setRow(uint8_t rowIdx) {
@@ -83,11 +81,8 @@ namespace {
 void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
     const TickType_t xFrequency = 20 / portTICK_PERIOD_MS;
     TickType_t xLastWakeTime = xTaskGetTickCount();
-//    std::array<uint8_t, 7> keyArray{};
     uint16_t to_be_printed = 0x0;
     uint16_t prev_to_be_printed = 0x0;
-
-    const std::bitset<24> keyBitMask("111111111111000000000000");
 
     std::bitset<24> inputs;
 
@@ -95,9 +90,9 @@ void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
         for (size_t i = 0; i < 6; i++) {
             setRow(i);
             delayMicroseconds(3);
-            read(inputs, 5-i);
+            read(inputs, 5 - i);
         }
-        to_be_printed = ((inputs & keyBitMask) >> 12).to_ulong();
+        to_be_printed = (inputs >> 12).to_ulong();
 
 //        if (prev_to_be_printed ^ to_be_printed) {
 //            Switch keyNum = decode_to_idx(prev_to_be_printed ^ to_be_printed);
@@ -105,13 +100,13 @@ void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
 
         bool a, b;
         std::tie(a, b) = Knobs::getAB(inputs, 3);
-        k3.updateRotation(a,b);
+        k3.updateRotation(a, b);
         std::tie(a, b) = Knobs::getAB(inputs, 2);
-        k2.updateRotation(a,b);
+        k2.updateRotation(a, b);
         std::tie(a, b) = Knobs::getAB(inputs, 1);
-        k1.updateRotation(a,b);
+        k1.updateRotation(a, b);
         std::tie(a, b) = Knobs::getAB(inputs, 0);
-        k0.updateRotation(a,b);
+        k0.updateRotation(a, b);
 
         threadSafeArray.write(inputs);
         __atomic_store_n(&currentStepSize, STEPSIZES[decode_to_idx(to_be_printed)], __ATOMIC_RELAXED);

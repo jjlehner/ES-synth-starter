@@ -12,9 +12,8 @@ void ThreadSafeArray::initMutex() {
 }
 
 uint16_t ThreadSafeArray::read() {
-    const std::bitset<24> keyBitMask("111111111111000000000000");
     xSemaphoreTake(keyArrayMutex, portMAX_DELAY);
-    uint16_t comb = ((buff & keyBitMask) >> 12).to_ulong();
+    uint16_t comb = (buff >> 12).to_ulong();
     xSemaphoreGive(keyArrayMutex);
     return comb;
 }
