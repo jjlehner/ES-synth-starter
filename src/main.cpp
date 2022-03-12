@@ -33,6 +33,7 @@ const int HKOW_BIT = 5;
 const int HKOE_BIT = 6;
 
 volatile int32_t currentStepSize;
+volatile uint8_t TX_Message[8]= {0};
 
 volatile Knobs k0;
 volatile Knobs k1;

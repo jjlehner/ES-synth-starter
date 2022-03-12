@@ -7,7 +7,10 @@
 #include "STM32FreeRTOS.h"
 #include <U8g2lib.h>
 #include <array>
+#include <bitset>
+#include <cassert>
 #include "Knobs.hpp"
+
 
 namespace {
     const static int32_t STEPSIZES[] = {int32_t(pow(2.0, 32.0) * 440.0 * pow(2.0, -9. / 12.) / 22000.),
@@ -25,6 +28,21 @@ namespace {
 
     static const char *NOTES[] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "No Key"};
 
+    typedef uint8_t Switch;
+
+    const Switch INDEX_KEY_C = 0;
+    const Switch INDEX_KEY_C_SHARP = 1;
+    const Switch INDEX_KEY_D = 2;
+    const Switch INDEX_KEY_D_SHARP = 3;
+    const Switch INDEX_KEY_E = 4;
+    const Switch INDEX_KEY_F = 5;
+    const Switch INDEX_KEY_F_SHARP = 6;
+    const Switch INDEX_KEY_G = 7;
+    const Switch INDEX_KEY_G_SHARP = 8;
+    const Switch INDEX_KEY_A = 9;
+    const Switch INDEX_KEY_A_SHARP = 10;
+    const Switch INDEX_KEY_B = 11;
+    const Switch INDEX_KEY_NO_KEY = 12;
 
     inline int shift_n(const int PIN, size_t n) {
         return digitalRead(PIN) << n;
@@ -32,6 +50,13 @@ namespace {
 
     uint8_t readCols() {
         return shift_n(C0_PIN, 3) + shift_n(C1_PIN, 2) + shift_n(C2_PIN, 1) + shift_n(C3_PIN, 0);
+    }
+
+    void read(std::bitset<24> &inputs, size_t row) {
+        inputs.set(row*4+3, digitalRead(C0_PIN));
+        inputs.set(row*4+2, digitalRead(C1_PIN));
+        inputs.set(row*4+1, digitalRead(C2_PIN));
+        inputs.set(row*4, digitalRead(C3_PIN));
     }
 
     void setRow(uint8_t rowIdx) {
@@ -58,27 +83,37 @@ namespace {
 void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
     const TickType_t xFrequency = 20 / portTICK_PERIOD_MS;
     TickType_t xLastWakeTime = xTaskGetTickCount();
-    std::array<uint8_t, 7> keyArray{};
+//    std::array<uint8_t, 7> keyArray{};
+    uint16_t to_be_printed = 0x0;
+    uint16_t prev_to_be_printed = 0x0;
+
+    const std::bitset<24> keyBitMask("111111111111000000000000");
+
+    std::bitset<24> inputs;
+
     while (true) {
-        for (size_t i = 0; i < 7; i++) {
+        for (size_t i = 0; i < 6; i++) {
             setRow(i);
             delayMicroseconds(3);
-            uint8_t keys = readCols();
-            keyArray[i] = keys;
+            read(inputs, 5-i);
         }
-        uint16_t to_be_printed = (keyArray[0] << 4 * 2) + (keyArray[1] << 4 * 1) + keyArray[2];
+        to_be_printed = ((inputs & keyBitMask) >> 12).to_ulong();
+
+//        if (prev_to_be_printed ^ to_be_printed) {
+//            Switch keyNum = decode_to_idx(prev_to_be_printed ^ to_be_printed);
+//        }
 
         bool a, b;
-        std::tie(a, b) = Knobs::getAB(keyArray, 3);
+        std::tie(a, b) = Knobs::getAB(inputs, 3);
         k3.updateRotation(a,b);
-        std::tie(a, b) = Knobs::getAB(keyArray, 2);
+        std::tie(a, b) = Knobs::getAB(inputs, 2);
         k2.updateRotation(a,b);
-        std::tie(a, b) = Knobs::getAB(keyArray, 1);
+        std::tie(a, b) = Knobs::getAB(inputs, 1);
         k1.updateRotation(a,b);
-        std::tie(a, b) = Knobs::getAB(keyArray, 0);
+        std::tie(a, b) = Knobs::getAB(inputs, 0);
         k0.updateRotation(a,b);
 
-        threadSafeArray.write(keyArray);
+        threadSafeArray.write(inputs);
         __atomic_store_n(&currentStepSize, STEPSIZES[decode_to_idx(to_be_printed)], __ATOMIC_RELAXED);
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
     }
@@ -101,4 +136,6 @@ void Tasks::displayUpdateTask(__attribute__((unused)) void *pvParameters) {
         digitalToggle(LED_BUILTIN);
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
     }
+
+
 }
