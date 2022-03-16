@@ -2,7 +2,7 @@
 #include <U8g2lib.h>
 #include <STM32FreeRTOS.h>
 #include "ThreadSafeArray.hpp"
-#include "Tasks.hpp"
+#include "Tasks.hpp" 
 
 //Pin definitions
 //Row select and enable
