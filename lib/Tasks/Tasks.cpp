@@ -143,7 +143,6 @@ void Tasks::displayUpdateTask(__attribute__((unused)) void *pvParameters) {
 
 void Tasks::decodeTask(__attribute__((unused)) void *pvParameters) {
     std::array<uint8_t , 8> RX_Message;
-    std::stringstream ss;
     while(true){
         xQueueReceive(msgInQ, RX_Message.data(), portMAX_DELAY);
         std::ostringstream ss;

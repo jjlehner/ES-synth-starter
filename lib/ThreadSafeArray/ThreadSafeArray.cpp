@@ -28,8 +28,8 @@ std::array<KeyStateChange, 12>
 ThreadSafeArray::findKeyStateChanges(const std::bitset<24> &newKeyArray) {
     std::array<KeyStateChange, 12> keyStateChanges;
     keyStateChanges.fill(KeyStateChange::NO_CHANGE);
-    auto releasedKeys = (~newKeyArray & buff) >> 12;
-    auto pressedKeys = (newKeyArray & buff) >> 12;
+    auto releasedKeys = (newKeyArray & ~buff) >> 12;
+    auto pressedKeys = (~newKeyArray & buff) >> 12;
     for(int i = 0; i <12; i++){
         keyStateChanges[i] = releasedKeys[i] ? KeyStateChange::RELEASED : keyStateChanges[i];
         keyStateChanges[i] = pressedKeys[i] ? KeyStateChange::PRESSED : keyStateChanges[i];

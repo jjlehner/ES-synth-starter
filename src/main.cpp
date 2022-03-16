@@ -69,7 +69,7 @@ void setup() {
     Serial.begin(9600);
     Serial.println("Hello World");
     msgInQ = xQueueCreate(36,8);
-    CAN_Init(true);
+    CAN_Init(false);
     CAN_RegisterRX_ISR(CANFrame::receiveISR);
     setCANFilter(0x123,0x7ff);
     CAN_Start();
@@ -145,7 +145,7 @@ void loop() {
 
 void sampleISR() {
     static int32_t phaseAcc= 0;
-    phaseAcc+= currentStepSize;
+    phaseAcc += currentStepSize;
     int32_t Vout = phaseAcc >> 24;
     Vout= Vout >> (8 -k3.getRotation()/2);
     analogWrite(OUTR_PIN, Vout + 128);
