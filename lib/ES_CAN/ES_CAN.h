@@ -1,3 +1,5 @@
+#ifndef ES_SYNTH_STARTER_ES_CAN_H
+#define ES_SYNTH_STARTER_ES_CAN_H
 //Initialise the CAN module
 uint32_t CAN_Init(bool loopback=false);
 
@@ -22,3 +24,5 @@ uint32_t CAN_RegisterRX_ISR(void(& callback)());
 
 //Set up an interrupt on transmitted messages
 uint32_t CAN_RegisterTX_ISR(void(& callback)());
+
+#endif

@@ -109,6 +109,7 @@ void setup() {
     sampleTimer->resume();
     TaskHandle_t scanKeysHandler = nullptr;
     TaskHandle_t displayUpdateHandler = nullptr;
+    TaskHandle_t decodeHandler = nullptr;
     xTaskCreate(Tasks::scanKeysTask,/* Function that implements the task */
                 "scanKeys",/* Text name for the task */
                 64,/* Stack size in words, not bytes*/
@@ -123,6 +124,13 @@ void setup() {
                 1,/* Task priority*/
                 &displayUpdateHandler /* Pointer to store the task handle*/
     );
+    xTaskCreate(Tasks::decodeTask,
+                "decodeTask",
+                32,
+                nullptr,
+                3,
+                nullptr
+                );
     vTaskStartScheduler();
 }
 

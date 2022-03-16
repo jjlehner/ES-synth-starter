@@ -110,6 +110,7 @@ void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
         k0.updateRotation(a, b);
 
         threadSafeArray.write(inputs);
+        //CANFrame().send();
         currentStepSize.store(STEPSIZES[decode_to_idx(to_be_printed)], std::memory_order_relaxed);
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
     }

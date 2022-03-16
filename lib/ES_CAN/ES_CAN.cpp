@@ -63,7 +63,7 @@ void HAL_CAN_MspInit(CAN_HandleTypeDef* CAN_Handle) {
 }
 
 
-uint32_t CAN_Init(bool loopback=false) {
+uint32_t CAN_Init(bool loopback) {
   if (loopback)
     CAN_Handle.Init.Mode = CAN_MODE_LOOPBACK;
   return (uint32_t) HAL_CAN_Init(&CAN_Handle);

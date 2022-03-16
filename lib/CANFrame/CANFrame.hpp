@@ -21,24 +21,13 @@ private:
     static constexpr uint32_t MESSAGE_ID = 0x123;
 
 public:
+    CANFrame(uint8_t keyPressed, uint8_t octaveNum, uint8_t noteNum);
 
-    void send(){
-        std::array<uint8_t, 8> frame = {
-            keyPressed, octaveNum, noteNum, 0, 0, 0, 0, 0
-        };
+    void send();
 
-        CAN_TX(MESSAGE_ID, frame.data());
-    }
+    static void receiveISR();
 
-    static void receiveISR(){
-
-        std::array<uint8_t,8> incomingFrame;
-        uint32_t ID;
-        CAN_RX(ID, incomingFrame.data());
-        xQueueSendFromISR(msgInQ, incomingFrame.data(), NULL);
-    }
 };
-
 
 
 #endif //ES_SYNTH_STARTER_CAN_FRAME_HPP
