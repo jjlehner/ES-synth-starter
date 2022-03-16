@@ -137,10 +137,10 @@ void setup() {
 
 void loop() {
     // put your main code here, to run repeatedly:
-    Serial.println();
-    char bytes[14];
-    sprintf(bytes,"%d, %d, %d, %d", k3.getRotation(), k2.getRotation(), k1.getRotation(), k0.getRotation());
-    Serial.println(bytes);
+//    Serial.println();
+//    char bytes[14];
+//    sprintf(bytes,"%d, %d, %d, %d", k3.getRotation(), k2.getRotation(), k1.getRotation(), k0.getRotation());
+//    Serial.println(bytes);
 }
 
 void sampleISR() {
