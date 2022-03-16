@@ -1,9 +1,9 @@
 # Handshaking and auto-detection
   Stacksynth modules are designed to be joined together to make a larger keyboard. Messages are exchanged between modules using a CAN bus.
   Typically, one module will have a receiver role and synthesise the notes that are played any module. The other modules transmit notes.
-  Each module needs to be set up to generate notes from a different octave.
+  Each module needs to be set up to generate notes from a different octaveNum.
   
-  The role and octave can be defined by compiling different versions of the code for each module.
+  The role and octaveNum can be defined by compiling different versions of the code for each module.
   You can also allow them to be set with the user interface.
   However, a neater solution is to implement a handshaking system so that modules will automatically set up the roles and octaves on startup.
   
@@ -86,6 +86,6 @@
        - If this module is the most easterly, send another CAN message to indicate handshaking complete
        - 
   Once handshaking is complete, each module will contain a data structure listing the ID and position of every module.
-  This can be used to set up the role and octave number of each module.
+  This can be used to set up the role and octaveNum number of each module.
   
   

@@ -35,7 +35,6 @@ const int DRST_BIT = 4;
 const int HKOW_BIT = 5;
 const int HKOE_BIT = 6;
 
-std::atomic<int32_t> currentStepSize;
 volatile uint8_t TX_Message[8]= {0};
 
 volatile Knobs k0;
@@ -51,6 +50,10 @@ void sampleISR();
 U8G2_SSD1305_128X32_NONAME_F_HW_I2C u8g2(U8G2_R0);
 
 QueueHandle_t msgInQ;
+QueueHandle_t msgOutQ;
+SemaphoreHandle_t CAN_TX_Semaphore;
+
+std::atomic<int32_t> currentStepSize;
 
 //Function to set outputs using key matrix
 void setOutMuxBit(const uint8_t bitIdx, const bool value) {
@@ -64,17 +67,21 @@ void setOutMuxBit(const uint8_t bitIdx, const bool value) {
     digitalWrite(REN_PIN, LOW);
 }
 
+void CAN_TX_ISR();
+
 void setup() {
     // put your setup code here, to run once:
     //Initialise UART
     Serial.begin(9600);
     Serial.println("Hello World");
     msgInQ = xQueueCreate(36,8);
+    msgOutQ = xQueueCreate(36, 8);
+    CAN_TX_Semaphore = xSemaphoreCreateCounting(3,3);
     CAN_Init(false);
     CAN_RegisterRX_ISR(CANFrame::receiveISR);
+    CAN_RegisterTX_ISR(CAN_TX_ISR);
     setCANFilter(0x123,0x7ff);
     CAN_Start();
-
 
     //Set pin directions
     pinMode(RA0_PIN, OUTPUT);
@@ -111,6 +118,7 @@ void setup() {
     TaskHandle_t scanKeysHandler = nullptr;
     TaskHandle_t displayUpdateHandler = nullptr;
     TaskHandle_t decodeHandler = nullptr;
+    TaskHandle_t transmitHandler = nullptr;
     xTaskCreate(Tasks::scanKeysTask,/* Function that implements the task */
                 "scanKeys",/* Text name for the task */
                 64,/* Stack size in words, not bytes*/
@@ -130,8 +138,15 @@ void setup() {
                 32,
                 nullptr,
                 3,
-                nullptr
+                &decodeHandler
                 );
+    xTaskCreate(Tasks::transmitTask,
+                "transmitTask",
+                32,
+                nullptr,
+                3,
+                &transmitHandler
+    );
     vTaskStartScheduler();
 }
 
@@ -150,4 +165,8 @@ void sampleISR() {
     int32_t Vout = phaseAcc >> 24;
     Vout= Vout >> (8 -k3.getRotation()/2);
     analogWrite(OUTR_PIN, Vout + 128);
+}
+
+void CAN_TX_ISR() {
+    xSemaphoreGiveFromISR(CAN_TX_Semaphore, NULL);
 }

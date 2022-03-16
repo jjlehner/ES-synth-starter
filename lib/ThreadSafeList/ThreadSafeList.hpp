@@ -8,18 +8,33 @@
 #include <list>
 #include "STM32FreeRTOS.h"
 
-template <class T> class ThreadSafeList {
+template <typename T> class ThreadSafeList {
 private:
     std::list<T> list;
     SemaphoreHandle_t listMutex{};
 public:
     ThreadSafeList()=default;
 
-    void initMutex();
+    void initMutex(){
+        listMutex = xSemaphoreCreateMutex();
+    }
 
-    void push_back(T elem);
-
-    std::list<T> read();
+    void push_back(T elem){
+        xSemaphoreTake(listMutex, portMAX_DELAY);
+        list.push_back(elem);
+        xSemaphoreGive(listMutex);
+    }
+    void remove(T val){
+        xSemaphoreTake(listMutex, portMAX_DELAY);
+        list.remove(val);
+        xSemaphoreGive(listMutex);
+    }
+    std::list<T> read(){
+        xSemaphoreTake(listMutex, portMAX_DELAY);
+        std::list<T> copy = list;
+        xSemaphoreGive(listMutex);
+        return copy;
+    }
 };
 
 #endif //ES_SYNTH_STARTER_THREADSAFELIST_HPP

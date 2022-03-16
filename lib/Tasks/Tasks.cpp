@@ -7,27 +7,12 @@
 #include "STM32FreeRTOS.h"
 #include <U8g2lib.h>
 #include <bitset>
-#include <sstream>
+#include <string>
 #include "Knobs.hpp"
-#include "CANFrame.hpp"
-
-
+#include "ThreadSafeList.hpp"
 namespace {
-    const static int32_t STEPSIZES[] = {int32_t(pow(2.0, 32.0) * 440.0 * pow(2.0, -9. / 12.) / 22000.),
-                                        int32_t(pow(2.0, 32.0) * 440.0 * pow(2.0, -8. / 12.) / 22000.0),
-                                        int32_t(pow(2.0, 32.0) * 440.0 * pow(2.0, -7. / 12.) / 22000.0),
-                                        int32_t(pow(2.0, 32.0) * 440.0 * pow(2.0, -6. / 12.) / 22000.0),
-                                        int32_t(pow(2.0, 32.0) * 440.0 * pow(2.0, -5. / 12.) / 22000.0),
-                                        int32_t(pow(2., 32.) * 440. * pow(2., -4. / 12.) / 22000.),
-                                        int32_t(pow(2., 32.) * 440. * pow(2., -3. / 12.) / 22000.),
-                                        int32_t(pow(2., 32.) * 440. * pow(2., -2. / 12.) / 22000.),
-                                        int32_t(pow(2., 32.) * 440. * pow(2., -1. / 12.) / 22000.),
-                                        int32_t(pow(2., 32.) * 440. * pow(2., 0. / 12.) / 22000.),
-                                        int32_t(pow(2., 32.) * 440. * pow(2., 1. / 12.) / 22000.),
-                                        int32_t(pow(2., 32.) * 440. * pow(2.0, 2. / 12.) / 22000.), int32_t(0.0)};
-
     static const char *NOTES[] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "No Key"};
-
+    ThreadSafeList<Note> notesPressed;
     typedef uint8_t Switch;
 
     const Switch INDEX_KEY_C = 0;
@@ -81,6 +66,9 @@ namespace {
 }
 
 void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
+    notesPressed = ThreadSafeList<Note>();
+    notesPressed.initMutex();
+
     const TickType_t xFrequency = 20 / portTICK_PERIOD_MS;
     TickType_t xLastWakeTime = xTaskGetTickCount();
     uint16_t to_be_printed = 0x0;
@@ -113,11 +101,25 @@ void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
         auto keyStateChanges = threadSafeArray.findKeyStateChanges(inputs);
         for(size_t i = 0; i < keyStateChanges.size(); i++){
             if(keyStateChanges[i] != KeyStateChange::NO_CHANGE){
-                CANFrame(keyStateChanges[i] == KeyStateChange::PRESSED, 4, keyStateChanges.size() - i).send();
+                CANFrame(keyStateChanges[i] == KeyStateChange::PRESSED, 4, keyStateChanges.size() - 1 - i).send();
+            }
+            if(keyStateChanges[i] == KeyStateChange::PRESSED){
+                notesPressed.push_back(Note{(uint8_t) (keyStateChanges.size() - 1 - i),4});
+            }
+            if(keyStateChanges[i] == KeyStateChange::RELEASED){
+                Serial.println("hi");
+
+                notesPressed.remove(Note{(uint8_t) (keyStateChanges.size() - 1 - i),4});
             }
         }
+        auto notesToPlay = notesPressed.read();
+        if(notesToPlay.size() >= 1){
+            currentStepSize.store(notesToPlay.front().getStepSize(), std::memory_order_relaxed);
+        }
+        else{
+            currentStepSize.store(0, std::memory_order_relaxed);
+        }
         threadSafeArray.write(inputs);
-        currentStepSize.store(STEPSIZES[decode_to_idx(to_be_printed)], std::memory_order_relaxed);
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
     }
 }
@@ -145,10 +147,22 @@ void Tasks::decodeTask(__attribute__((unused)) void *pvParameters) {
     std::array<uint8_t , 8> RX_Message;
     while(true){
         xQueueReceive(msgInQ, RX_Message.data(), portMAX_DELAY);
-        std::ostringstream ss;
-        for(auto data : RX_Message){
-            ss << data;
+        auto RX_Frame = CANFrame(RX_Message);
+        auto note = Note{RX_Frame.getNoteNum(),(uint8_t) (RX_Frame.getOctaveNum()+1)};
+        if(RX_Frame.getKeyPressed()){
+            notesPressed.push_back(note);
         }
-        Serial.println(ss.str().c_str());
+        else{
+           notesPressed.remove(note);
+        }
+    }
+}
+
+void Tasks::transmitTask(__attribute__((unused)) void *pvParameters) {
+    std::array<uint8_t ,8> msgOut;
+    while(true){
+        xQueueReceive(msgOutQ, msgOut.data(), portMAX_DELAY);
+        xSemaphoreTake(CAN_TX_Semaphore, portMAX_DELAY);
+        CAN_TX(0x123, msgOut.data());
     }
 }
