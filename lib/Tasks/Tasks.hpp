@@ -10,7 +10,7 @@
 #include <U8g2lib.h>
 
 extern ThreadSafeArray threadSafeArray;
-extern volatile int32_t currentStepSize;
+extern std::atomic<int32_t> currentStepSize;
 
 extern volatile Knobs k0;
 extern volatile Knobs k1;
@@ -34,6 +34,8 @@ namespace Tasks {
     [[noreturn]] void scanKeysTask(__attribute__((unused)) void *pvParameters);
 
     [[noreturn]] void displayUpdateTask(__attribute__((unused)) void *pvParameters);
+
+    [[noreturn]] void decodeTask(__attribute__((unused)) void *pvParameters);
 }
 
 #endif //ES_SYNTH_STARTER_TASKS_HPP

@@ -2,7 +2,9 @@
 #include <U8g2lib.h>
 #include <STM32FreeRTOS.h>
 #include "ThreadSafeArray.hpp"
-#include "Tasks.hpp" 
+#include "Tasks.hpp"
+#include "ES_CAN.h"
+#include "CANFrame.hpp"
 
 //Pin definitions
 //Row select and enable
@@ -32,7 +34,7 @@ const int DRST_BIT = 4;
 const int HKOW_BIT = 5;
 const int HKOE_BIT = 6;
 
-volatile int32_t currentStepSize;
+std::atomic<int32_t> currentStepSize;
 volatile uint8_t TX_Message[8]= {0};
 
 volatile Knobs k0;
@@ -46,6 +48,8 @@ void sampleISR();
 
 //Display driver object
 U8G2_SSD1305_128X32_NONAME_F_HW_I2C u8g2(U8G2_R0);
+
+QueueHandle_t msgInQ;
 
 //Function to set outputs using key matrix
 void setOutMuxBit(const uint8_t bitIdx, const bool value) {
@@ -64,6 +68,12 @@ void setup() {
     //Initialise UART
     Serial.begin(9600);
     Serial.println("Hello World");
+    msgInQ = xQueueCreate(36,8);
+    CAN_Init(true);
+    CAN_RegisterRX_ISR(CANFrame::receiveISR);
+    setCANFilter(0x123,0x7ff);
+    CAN_Start();
+
 
     //Set pin directions
     pinMode(RA0_PIN, OUTPUT);

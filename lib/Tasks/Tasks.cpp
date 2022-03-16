@@ -8,6 +8,7 @@
 #include <U8g2lib.h>
 #include <bitset>
 #include "Knobs.hpp"
+#include "CANFrame.hpp"
 
 
 namespace {
@@ -109,7 +110,7 @@ void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
         k0.updateRotation(a, b);
 
         threadSafeArray.write(inputs);
-        __atomic_store_n(&currentStepSize, STEPSIZES[decode_to_idx(to_be_printed)], __ATOMIC_RELAXED);
+        currentStepSize.store(STEPSIZES[decode_to_idx(to_be_printed)], std::memory_order_relaxed);
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
     }
 }
@@ -131,6 +132,11 @@ void Tasks::displayUpdateTask(__attribute__((unused)) void *pvParameters) {
         digitalToggle(LED_BUILTIN);
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
     }
+}
 
-
+void Tasks::decodeTask(__attribute__((unused)) void *pvParameters) {
+    std::array<uint8_t , 8> RX_Message;
+    while(true){
+        xQueueReceive(msgInQ, RX_Message.data(), portMAX_DELAY);
+    }
 }
