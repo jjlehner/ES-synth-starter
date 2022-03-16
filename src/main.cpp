@@ -2,6 +2,7 @@
 #include <U8g2lib.h>
 #include <STM32FreeRTOS.h>
 #include "ThreadSafeArray.hpp"
+#include "ThreadSafeList.hpp"
 #include "Tasks.hpp"
 #include "ES_CAN.h"
 #include "CANFrame.hpp"

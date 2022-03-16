@@ -1,5 +1,4 @@
 #include "ThreadSafeArray.hpp"
-#include "STM32FreeRTOS.h"
 
 //
 // Created by Neel on 11/03/2022.
