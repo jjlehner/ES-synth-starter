@@ -12,7 +12,7 @@ void ClampedCounter::increment() volatile {
     internalCounter++;
 }
 void ClampedCounter::decrement() volatile {
-    if (internalCounter == 0)
+    if (internalCounter == lower)
         return;
     internalCounter--;
 }
