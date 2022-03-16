@@ -4,13 +4,14 @@
 
 #include "CANFrame.hpp"
 
-CANFrame::CANFrame(uint8_t keyPressed, uint8_t octaveNum, uint8_t noteNum) : keyPressed(keyPressed),
+CANFrame::CANFrame(bool keyPressed, uint8_t octaveNum, uint8_t noteNum) : keyPressed(keyPressed),
                                                                              octaveNum(octaveNum),
                                                                              noteNum(noteNum) {}
 
 void CANFrame::send() {
+    uint8_t keyPressed = this->keyPressed ? 0x50 : 0x52;
     std::array<uint8_t, 8> frame = {
-            keyPressed, octaveNum, noteNum, 0, 0, 0, 0, 0
+            keyPressed, this->octaveNum, this->noteNum, 0, 0, 0, 0, 0
     };
 
     CAN_TX(MESSAGE_ID, frame.data());

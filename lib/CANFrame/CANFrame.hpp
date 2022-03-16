@@ -14,14 +14,14 @@ extern QueueHandle_t msgInQ;
 
 class CANFrame {
 private:
-    uint8_t keyPressed;
+    bool keyPressed;
     uint8_t octaveNum;
     uint8_t noteNum;
 
     static constexpr uint32_t MESSAGE_ID = 0x123;
 
 public:
-    CANFrame(uint8_t keyPressed, uint8_t octaveNum, uint8_t noteNum);
+    CANFrame(bool keyPressed, uint8_t octaveNum, uint8_t noteNum);
 
     void send();
 

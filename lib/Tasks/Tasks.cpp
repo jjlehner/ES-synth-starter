@@ -7,6 +7,7 @@
 #include "STM32FreeRTOS.h"
 #include <U8g2lib.h>
 #include <bitset>
+#include <sstream>
 #include "Knobs.hpp"
 #include "CANFrame.hpp"
 
@@ -109,8 +110,13 @@ void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
         std::tie(a, b) = Knobs::getAB(inputs, 0);
         k0.updateRotation(a, b);
 
+        auto keyStateChanges = threadSafeArray.findKeyStateChanges(inputs);
+        for(size_t i = 0; i < keyStateChanges.size(); i++){
+            if(keyStateChanges[i] != KeyStateChange::NO_CHANGE){
+                CANFrame(keyStateChanges[i] == KeyStateChange::PRESSED, 4, keyStateChanges.size() - i).send();
+            }
+        }
         threadSafeArray.write(inputs);
-        //CANFrame().send();
         currentStepSize.store(STEPSIZES[decode_to_idx(to_be_printed)], std::memory_order_relaxed);
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
     }
@@ -137,7 +143,13 @@ void Tasks::displayUpdateTask(__attribute__((unused)) void *pvParameters) {
 
 void Tasks::decodeTask(__attribute__((unused)) void *pvParameters) {
     std::array<uint8_t , 8> RX_Message;
+    std::stringstream ss;
     while(true){
         xQueueReceive(msgInQ, RX_Message.data(), portMAX_DELAY);
+        std::ostringstream ss;
+        for(auto data : RX_Message){
+            ss << data;
+        }
+        Serial.println(ss.str().c_str());
     }
 }
