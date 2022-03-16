@@ -9,6 +9,7 @@
 #include "ThreadSafeList.hpp"
 #include "Knobs.hpp"
 #include "CANFrame.hpp"
+#include "config.hpp"
 #include <U8g2lib.h>
 
 extern ThreadSafeArray threadSafeArray;
@@ -34,7 +35,6 @@ extern U8G2_SSD1305_128X32_NONAME_F_HW_I2C u8g2;
 extern std::atomic<int32_t> currentStepSize;
 
 extern SemaphoreHandle_t CAN_TX_Semaphore;
-
 namespace Tasks {
     [[noreturn]] void scanKeysTask(__attribute__((unused)) void *pvParameters);
     [[noreturn]] void displayUpdateTask(__attribute__((unused)) void *pvParameters);

@@ -73,14 +73,13 @@ void setup() {
     // put your setup code here, to run once:
     //Initialise UART
     Serial.begin(9600);
-    Serial.println("Hello World");
-    msgInQ = xQueueCreate(36,8);
+    msgInQ = xQueueCreate(36, 8);
     msgOutQ = xQueueCreate(36, 8);
-    CAN_TX_Semaphore = xSemaphoreCreateCounting(3,3);
+    CAN_TX_Semaphore = xSemaphoreCreateCounting(3, 3);
     CAN_Init(false);
     CAN_RegisterRX_ISR(CANFrame::receiveISR);
     CAN_RegisterTX_ISR(CAN_TX_ISR);
-    setCANFilter(0x123,0x7ff);
+    setCANFilter(0x123, 0x7ff);
     CAN_Start();
 
     //Set pin directions
@@ -111,7 +110,7 @@ void setup() {
 
     //Start ISR
     TIM_TypeDef *Instance = TIM1;
-    auto *sampleTimer= new HardwareTimer(Instance);
+    auto *sampleTimer = new HardwareTimer(Instance);
     sampleTimer->setOverflow(22000, HERTZ_FORMAT);
     sampleTimer->attachInterrupt(sampleISR);
     sampleTimer->resume();
@@ -119,13 +118,14 @@ void setup() {
     TaskHandle_t displayUpdateHandler = nullptr;
     TaskHandle_t decodeHandler = nullptr;
     TaskHandle_t transmitHandler = nullptr;
+
     xTaskCreate(Tasks::scanKeysTask,/* Function that implements the task */
                 "scanKeys",/* Text name for the task */
                 64,/* Stack size in words, not bytes*/
                 nullptr,/* Parameter passed into the task */
                 2,/* Task priority*/
                 &scanKeysHandler /* Pointer to store the task handle*/
-                );
+    );
     xTaskCreate(Tasks::displayUpdateTask,/* Function that implements the task */
                 "displayUpdate",/* Text name for the task */
                 256,/* Stack size in words, not bytes*/
@@ -139,7 +139,7 @@ void setup() {
                 nullptr,
                 3,
                 &decodeHandler
-                );
+    );
     xTaskCreate(Tasks::transmitTask,
                 "transmitTask",
                 32,
@@ -148,6 +148,7 @@ void setup() {
                 &transmitHandler
     );
     vTaskStartScheduler();
+
 }
 
 

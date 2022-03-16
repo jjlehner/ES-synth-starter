@@ -7,7 +7,6 @@
 #include "STM32FreeRTOS.h"
 #include <U8g2lib.h>
 #include <bitset>
-#include <string>
 #include "Knobs.hpp"
 #include "ThreadSafeList.hpp"
 namespace {
@@ -76,7 +75,11 @@ void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
 
     std::bitset<24> inputs;
 
-    while (true) {
+#ifdef PROFILING
+    for(size_t _ = 0; _ < 32; _++){
+#else
+    while(true){
+#endif
         for (size_t i = 0; i < 6; i++) {
             setRow(i);
             delayMicroseconds(3);
@@ -107,8 +110,6 @@ void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
                 notesPressed.push_back(Note{(uint8_t) (keyStateChanges.size() - 1 - i),4});
             }
             if(keyStateChanges[i] == KeyStateChange::RELEASED){
-                Serial.println("hi");
-
                 notesPressed.remove(Note{(uint8_t) (keyStateChanges.size() - 1 - i),4});
             }
         }
@@ -127,7 +128,7 @@ void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
 void Tasks::displayUpdateTask(__attribute__((unused)) void *pvParameters) {
     const TickType_t xFrequency = 100 / portTICK_PERIOD_MS;
     TickType_t xLastWakeTime = xTaskGetTickCount();
-    while (true) {
+    for(size_t _ = 0; _ < 32; _++){
         //Update display
         u8g2.clearBuffer();         // clear the internal memory
         u8g2.setFont(u8g2_font_ncenB08_tr); // choose a suitable font
@@ -145,7 +146,12 @@ void Tasks::displayUpdateTask(__attribute__((unused)) void *pvParameters) {
 
 void Tasks::decodeTask(__attribute__((unused)) void *pvParameters) {
     std::array<uint8_t , 8> RX_Message;
+#ifdef PROFILING
+    uint32_t startTime = micros();
+    for(size_t _ = 0; _ < 32; _++){
+#else
     while(true){
+#endif
         xQueueReceive(msgInQ, RX_Message.data(), portMAX_DELAY);
         auto RX_Frame = CANFrame(RX_Message);
         auto note = Note{RX_Frame.getNoteNum(),(uint8_t) (RX_Frame.getOctaveNum()+1)};
@@ -156,11 +162,18 @@ void Tasks::decodeTask(__attribute__((unused)) void *pvParameters) {
            notesPressed.remove(note);
         }
     }
+#ifdef PROFILING
+    Serial.println(micros()-startTime);
+#endif
 }
 
 void Tasks::transmitTask(__attribute__((unused)) void *pvParameters) {
     std::array<uint8_t ,8> msgOut;
+#ifdef PROFILING
+    for(size_t _ = 0; _ < 32; _++){
+#else
     while(true){
+#endif
         xQueueReceive(msgOutQ, msgOut.data(), portMAX_DELAY);
         xSemaphoreTake(CAN_TX_Semaphore, portMAX_DELAY);
         CAN_TX(0x123, msgOut.data());

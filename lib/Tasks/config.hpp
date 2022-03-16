@@ -1,0 +1,8 @@
+//
+// Created by Jonah Lehner on 16/03/2022.
+//
+
+#ifndef ES_SYNTH_STARTER_CONFIG_HPP
+#define ES_SYNTH_STARTER_CONFIG_HPP
+
+#endif //ES_SYNTH_STARTER_CONFIG_HPP
