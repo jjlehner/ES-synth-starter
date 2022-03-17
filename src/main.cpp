@@ -35,7 +35,7 @@ const int DRST_BIT = 4;
 const int HKOW_BIT = 5;
 const int HKOE_BIT = 6;
 
-volatile uint8_t TX_Message[8]= {0};
+volatile uint8_t TX_Message[8] = {0};
 
 volatile Knobs k0;
 volatile Knobs k1;
@@ -161,10 +161,10 @@ void loop() {
 }
 
 void sampleISR() {
-    static int32_t phaseAcc= 0;
+    static int32_t phaseAcc = 0;
     phaseAcc += currentStepSize;
     int32_t Vout = phaseAcc >> 24;
-    Vout= Vout >> (8 -k3.getRotation()/2);
+    Vout = Vout >> (8 - k3.getRotation() / 2);
     analogWrite(OUTR_PIN, Vout + 128);
 }
 

@@ -9,6 +9,7 @@
 #include <bitset>
 #include "Knobs.hpp"
 #include "ThreadSafeList.hpp"
+
 namespace {
     static const char *NOTES[] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "No Key"};
     ThreadSafeList<Note> notesPressed;
@@ -78,7 +79,7 @@ void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
 #ifdef PROFILING
     for(size_t _ = 0; _ < 32; _++){
 #else
-    while(true){
+    while (true) {
 #endif
         for (size_t i = 0; i < 6; i++) {
             setRow(i);
@@ -102,22 +103,22 @@ void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
         k0.updateRotation(a, b);
 
         auto keyStateChanges = threadSafeArray.findKeyStateChanges(inputs);
-        for(size_t i = 0; i < keyStateChanges.size(); i++){
-            if(keyStateChanges[i] != KeyStateChange::NO_CHANGE){
+        for (size_t i = 0; i < keyStateChanges.size(); i++) {
+            if (keyStateChanges[i] != KeyStateChange::NO_CHANGE) {
                 CANFrame(keyStateChanges[i] == KeyStateChange::PRESSED, 4, keyStateChanges.size() - 1 - i).send();
             }
-            if(keyStateChanges[i] == KeyStateChange::PRESSED){
-                notesPressed.push_back(Note{(uint8_t) (keyStateChanges.size() - 1 - i),4});
+            if (keyStateChanges[i] == KeyStateChange::PRESSED) {
+                notesPressed.push_back(Note{
+                        static_cast<uint8_t>((keyStateChanges.size() - 1 - i)), 4});
             }
-            if(keyStateChanges[i] == KeyStateChange::RELEASED){
-                notesPressed.remove(Note{(uint8_t) (keyStateChanges.size() - 1 - i),4});
+            if (keyStateChanges[i] == KeyStateChange::RELEASED) {
+                notesPressed.remove(Note{static_cast<uint8_t>((keyStateChanges.size() - 1 - i)), 4});
             }
         }
         auto notesToPlay = notesPressed.read();
-        if(notesToPlay.size() >= 1){
+        if (notesToPlay.size() >= 1) {
             currentStepSize.store(notesToPlay.front().getStepSize(), std::memory_order_relaxed);
-        }
-        else{
+        } else {
             currentStepSize.store(0, std::memory_order_relaxed);
         }
         threadSafeArray.write(inputs);
@@ -128,7 +129,7 @@ void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
 void Tasks::displayUpdateTask(__attribute__((unused)) void *pvParameters) {
     const TickType_t xFrequency = 100 / portTICK_PERIOD_MS;
     TickType_t xLastWakeTime = xTaskGetTickCount();
-    for(size_t _ = 0; _ < 32; _++){
+    for (size_t _ = 0; _ < 32; _++) {
         //Update display
         u8g2.clearBuffer();         // clear the internal memory
         u8g2.setFont(u8g2_font_ncenB08_tr); // choose a suitable font
@@ -145,21 +146,20 @@ void Tasks::displayUpdateTask(__attribute__((unused)) void *pvParameters) {
 }
 
 void Tasks::decodeTask(__attribute__((unused)) void *pvParameters) {
-    std::array<uint8_t , 8> RX_Message;
+    std::array<uint8_t, 8> RX_Message;
 #ifdef PROFILING
     uint32_t startTime = micros();
     for(size_t _ = 0; _ < 32; _++){
 #else
-    while(true){
+    while (true) {
 #endif
         xQueueReceive(msgInQ, RX_Message.data(), portMAX_DELAY);
         auto RX_Frame = CANFrame(RX_Message);
-        auto note = Note{RX_Frame.getNoteNum(),(uint8_t) (RX_Frame.getOctaveNum()+1)};
-        if(RX_Frame.getKeyPressed()){
+        auto note = Note{RX_Frame.getNoteNum(), (uint8_t) (RX_Frame.getOctaveNum() + 1)};
+        if (RX_Frame.getKeyPressed()) {
             notesPressed.push_back(note);
-        }
-        else{
-           notesPressed.remove(note);
+        } else {
+            notesPressed.remove(note);
         }
     }
 #ifdef PROFILING
@@ -168,11 +168,11 @@ void Tasks::decodeTask(__attribute__((unused)) void *pvParameters) {
 }
 
 void Tasks::transmitTask(__attribute__((unused)) void *pvParameters) {
-    std::array<uint8_t ,8> msgOut;
+    std::array<uint8_t, 8> msgOut;
 #ifdef PROFILING
     for(size_t _ = 0; _ < 32; _++){
 #else
-    while(true){
+    while (true) {
 #endif
         xQueueReceive(msgOutQ, msgOut.data(), portMAX_DELAY);
         xSemaphoreTake(CAN_TX_Semaphore, portMAX_DELAY);

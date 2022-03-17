@@ -32,7 +32,7 @@ void CANFrame::send() {
     std::array<uint8_t, 8> frame = {
             keyPressed, this->octaveNum, this->noteNum, 0, 0, 0, 0, 0
     };
-    xQueueSend( msgOutQ, frame.data(), portMAX_DELAY);
+    xQueueSend(msgOutQ, frame.data(), portMAX_DELAY);
 }
 
 void CANFrame::receiveISR() {
@@ -66,5 +66,5 @@ int32_t Note::getStepSize() {
 }
 
 bool Note::operator==(const Note &b) {
-    return (this->noteNum==b.noteNum) && (this->octaveNum==b.octaveNum);
+    return (this->noteNum == b.noteNum) && (this->octaveNum == b.octaveNum);
 }

@@ -21,9 +21,9 @@ enum class RotationDist : int8_t {
 
 class Knobs {
 private:
-    bool prevA=false;
-    bool prevB=false;
-    int oldChange=0;
+    bool prevA = false;
+    bool prevB = false;
+    int oldChange = 0;
     ClampedCounter rotation;
     unsigned long timeSinceDirStart;
     //Where row represents previous B,A and column represents current B,A
@@ -36,13 +36,16 @@ private:
     static constexpr const unsigned long epsilon = 20;
 public:
     static inline std::pair<bool, bool> getAB(const std::bitset<24> &keyArray, size_t knobIdx) {
-        bool A = keyArray[5+2*knobIdx];
-        bool B = keyArray[4+2*knobIdx];
+        bool A = keyArray[5 + 2 * knobIdx];
+        bool B = keyArray[4 + 2 * knobIdx];
         return std::make_pair(A, B);
     }
 
     Knobs();
+
     void updateRotation(bool newA, bool newB) volatile;
+
     size_t getRotation() volatile;
 };
+
 #endif //ES_SYNTH_STARTER_KNOBS_HPP

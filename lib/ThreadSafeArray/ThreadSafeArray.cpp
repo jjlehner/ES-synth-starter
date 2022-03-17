@@ -4,7 +4,7 @@
 // Created by Neel on 11/03/2022.
 //
 
-ThreadSafeArray::ThreadSafeArray()=default;
+ThreadSafeArray::ThreadSafeArray() = default;
 
 void ThreadSafeArray::initMutex() {
     keyArrayMutex = xSemaphoreCreateMutex();
@@ -29,7 +29,7 @@ ThreadSafeArray::findKeyStateChanges(const std::bitset<24> &newKeyArray) {
     keyStateChanges.fill(KeyStateChange::NO_CHANGE);
     auto releasedKeys = (newKeyArray & ~buff) >> 12;
     auto pressedKeys = (~newKeyArray & buff) >> 12;
-    for(int i = 0; i <12; i++){
+    for (int i = 0; i < 12; i++) {
         keyStateChanges[i] = releasedKeys[i] ? KeyStateChange::RELEASED : keyStateChanges[i];
         keyStateChanges[i] = pressedKeys[i] ? KeyStateChange::PRESSED : keyStateChanges[i];
     }

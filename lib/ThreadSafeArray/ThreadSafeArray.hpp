@@ -9,9 +9,10 @@
 #include <bitset>
 #include <array>
 
-enum class KeyStateChange{
+enum class KeyStateChange {
     PRESSED, RELEASED, NO_CHANGE
 };
+
 class ThreadSafeArray {
 private:
     std::bitset<24> buff;
@@ -23,6 +24,7 @@ public:
     void initMutex();
 
     void write(const std::bitset<24> &keyArray);
+
     std::array<KeyStateChange, 12> findKeyStateChanges(const std::bitset<24> &newKeyArray);
 
     uint16_t read();

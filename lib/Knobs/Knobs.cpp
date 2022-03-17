@@ -9,7 +9,7 @@ Knobs::Knobs() : timeSinceDirStart(millis()) {}
 void Knobs::updateRotation(bool newA, bool newB) volatile {
     int rowIndex = ((uint8_t) prevB << 1) + prevA;
     int colIndex = ((uint8_t) newB << 1) + newA;
-    if(millis() - timeSinceDirStart > epsilon) {
+    if (millis() - timeSinceDirStart > epsilon) {
         switch (rotationDist[rowIndex][colIndex]) {
             case RotationDist::Positive:
                 oldChange = 1;
@@ -34,9 +34,8 @@ void Knobs::updateRotation(bool newA, bool newB) volatile {
                 }
                 break;
         }
-    }
-    else{
-        if(rotationDist[rowIndex][colIndex] != RotationDist::NoChange){
+    } else {
+        if (rotationDist[rowIndex][colIndex] != RotationDist::NoChange) {
             timeSinceDirStart = millis();
         }
     }

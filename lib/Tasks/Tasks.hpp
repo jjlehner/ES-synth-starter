@@ -37,8 +37,11 @@ extern std::atomic<int32_t> currentStepSize;
 extern SemaphoreHandle_t CAN_TX_Semaphore;
 namespace Tasks {
     [[noreturn]] void scanKeysTask(__attribute__((unused)) void *pvParameters);
+
     [[noreturn]] void displayUpdateTask(__attribute__((unused)) void *pvParameters);
+
     [[noreturn]] void decodeTask(__attribute__((unused)) void *pvParameters);
+
     [[noreturn]] void transmitTask(__attribute__((unused)) void *pvParameters);
 }
 

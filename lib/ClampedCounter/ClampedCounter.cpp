@@ -4,13 +4,15 @@
 
 #include "ClampedCounter.hpp"
 
-ClampedCounter::ClampedCounter(size_t _lower, size_t _upper) : internalCounter((_upper-_lower)/2), lower(_lower), upper(_upper) {}
+ClampedCounter::ClampedCounter(size_t _lower, size_t _upper) : internalCounter((_upper - _lower) / 2), lower(_lower),
+                                                               upper(_upper) {}
 
 void ClampedCounter::increment() volatile {
     if (internalCounter == upper)
         return;
     internalCounter++;
 }
+
 void ClampedCounter::decrement() volatile {
     if (internalCounter == lower)
         return;

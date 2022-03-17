@@ -14,9 +14,12 @@ private:
     size_t lower;
     size_t upper;
 public:
-    explicit ClampedCounter(size_t _lower=0, size_t _upper=16);
+    explicit ClampedCounter(size_t _lower = 0, size_t _upper = 16);
+
     void increment() volatile;
+
     void decrement() volatile;
+
     size_t getInternalCounter() volatile;
 };
 
