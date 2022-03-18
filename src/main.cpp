@@ -121,7 +121,7 @@ void setup() {
 
     xTaskCreate(Tasks::scanKeysTask,/* Function that implements the task */
                 "scanKeys",/* Text name for the task */
-                64,/* Stack size in words, not bytes*/
+                256,/* Stack size in words, not bytes*/
                 nullptr,/* Parameter passed into the task */
                 2,/* Task priority*/
                 &scanKeysHandler /* Pointer to store the task handle*/
