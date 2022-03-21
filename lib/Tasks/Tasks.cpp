@@ -107,12 +107,12 @@ void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
                 notesPressed.remove(Note{static_cast<uint8_t>((keyStateChanges.size() - 1 - i)), 4, 0});
             }
         }
-        auto notesToPlay = notesPressed.read();
-        if (notesToPlay.size() >= 1) {
-            currentStepSize.store(notesToPlay.front().getStepSize(), std::memory_order_relaxed);
-        } else {
-            currentStepSize.store(0, std::memory_order_relaxed);
-        }
+        // auto notesToPlay = notesPressed.read();
+        // if (notesToPlay.size() >= 1) {
+        //     currentStepSize.store(notesToPlay.front().getStepSize(), std::memory_order_relaxed);
+        // } else {
+        //     currentStepSize.store(0, std::memory_order_relaxed);
+        // }
         threadSafeArray.write(inputs);
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
     }
