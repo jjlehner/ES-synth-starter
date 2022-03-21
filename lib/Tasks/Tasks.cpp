@@ -12,7 +12,6 @@
 
 namespace {
     static const char *NOTES[] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "No Key"};
-    ThreadSafeList<Note> notesPressed;
     typedef uint8_t Switch;
 
     const Switch INDEX_KEY_C = 0;
@@ -102,10 +101,10 @@ void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
             }
             if (keyStateChanges[i] == KeyStateChange::PRESSED) {
                 notesPressed.push_back(Note{
-                        static_cast<uint8_t>((keyStateChanges.size() - 1 - i)), 4});
+                        static_cast<uint8_t>((keyStateChanges.size() - 1 - i)), 4, micros()});
             }
             if (keyStateChanges[i] == KeyStateChange::RELEASED) {
-                notesPressed.remove(Note{static_cast<uint8_t>((keyStateChanges.size() - 1 - i)), 4});
+                notesPressed.remove(Note{static_cast<uint8_t>((keyStateChanges.size() - 1 - i)), 4, 0});
             }
         }
         auto notesToPlay = notesPressed.read();

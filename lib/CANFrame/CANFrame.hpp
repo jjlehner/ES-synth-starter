@@ -16,6 +16,7 @@ extern QueueHandle_t msgOutQ;
 struct Note {
     uint8_t noteNum;
     uint8_t octaveNum;
+    uint32_t timePressed;
 
     int32_t getStepSize();
 
