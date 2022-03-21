@@ -41,7 +41,7 @@ public:
         return std::make_pair(A, B);
     }
 
-    Knobs();
+    Knobs(size_t min=0, size_t max=16);
 
     void updateRotation(bool newA, bool newB) volatile;
 

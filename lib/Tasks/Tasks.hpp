@@ -10,6 +10,7 @@
 #include "Knobs.hpp"
 #include "CANFrame.hpp"
 #include "config.hpp"
+#include "IOHelper.hpp"
 #include <U8g2lib.h>
 
 extern ThreadSafeArray threadSafeArray;
@@ -19,20 +20,11 @@ extern volatile Knobs k1;
 extern volatile Knobs k2;
 extern volatile Knobs k3;
 
-extern const int C0_PIN;
-extern const int C1_PIN;
-extern const int C2_PIN;
-extern const int C3_PIN;
-
-extern const int REN_PIN;
-
-extern const int RA0_PIN;
-extern const int RA1_PIN;
-extern const int RA2_PIN;
-
 extern U8G2_SSD1305_128X32_NONAME_F_HW_I2C u8g2;
 
 extern std::atomic<int32_t> currentStepSize;
+
+extern const int OUT_PIN;
 
 extern SemaphoreHandle_t CAN_TX_Semaphore;
 namespace Tasks {

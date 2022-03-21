@@ -4,8 +4,6 @@
 
 #include "Knobs.hpp"
 
-Knobs::Knobs() : timeSinceDirStart(millis()) {}
-
 void Knobs::updateRotation(bool newA, bool newB) volatile {
     int rowIndex = ((uint8_t) prevB << 1) + prevA;
     int colIndex = ((uint8_t) newB << 1) + newA;
@@ -47,5 +45,7 @@ void Knobs::updateRotation(bool newA, bool newB) volatile {
 size_t Knobs::getRotation() volatile {
     return rotation.getInternalCounter();
 }
+
+Knobs::Knobs(size_t min, size_t max) : rotation(min, max), timeSinceDirStart(millis()){}
 
 constexpr const RotationDist Knobs::rotationDist[4][4];

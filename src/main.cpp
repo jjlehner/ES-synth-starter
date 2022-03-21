@@ -39,7 +39,7 @@ volatile uint8_t TX_Message[8] = {0};
 
 volatile Knobs k0;
 volatile Knobs k1;
-volatile Knobs k2;
+volatile Knobs k2(0,8);
 volatile Knobs k3;
 
 ThreadSafeArray threadSafeArray;
@@ -69,6 +69,28 @@ void setOutMuxBit(const uint8_t bitIdx, const bool value) {
 
 void CAN_TX_ISR();
 
+bool boardWest(){
+    return IOHelper::getMatrixValue(5,3);
+}
+void establishPosition(){
+    IOHelper::setRow(6);
+    digitalWrite(OUT_PIN, true);
+    delayMicroseconds(500);
+    uint8_t devicesSeen = 0;
+    std::array<uint8_t, 8> message;
+    bool westMost = boardWest();
+    Serial.println("Started");
+    while(!westMost){
+        xQueueReceive(msgInQ, message.data(), 0);
+        devicesSeen = message[0]+1;
+        westMost = boardWest();
+    }
+    message[0] = devicesSeen;
+    CAN_TX(0x123, message.data());
+    IOHelper::setRow(6);
+    digitalWrite(OUT_PIN, false);
+    Serial.println(devicesSeen);
+}
 void setup() {
     // put your setup code here, to run once:
     //Initialise UART
@@ -119,6 +141,7 @@ void setup() {
     TaskHandle_t decodeHandler = nullptr;
     TaskHandle_t transmitHandler = nullptr;
 
+    establishPosition();
     xTaskCreate(Tasks::scanKeysTask,/* Function that implements the task */
                 "scanKeys",/* Text name for the task */
                 256,/* Stack size in words, not bytes*/
@@ -147,6 +170,7 @@ void setup() {
                 3,
                 &transmitHandler
     );
+
     vTaskStartScheduler();
 
 }

@@ -44,14 +44,6 @@ namespace {
         inputs.set(row * 4, digitalRead(C3_PIN));
     }
 
-    void setRow(uint8_t rowIdx) {
-        digitalWrite(REN_PIN, LOW);
-        digitalWrite(RA0_PIN, rowIdx & 0x1);
-        digitalWrite(RA1_PIN, rowIdx & 0x2);
-        digitalWrite(RA2_PIN, rowIdx & 0x4);
-        digitalWrite(REN_PIN, HIGH);
-    }
-
 // decodes the hexcode to an idx
     inline uint8_t decode_to_idx(uint16_t bits) {
         bits = ~bits;
@@ -81,8 +73,9 @@ void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
 #else
     while (true) {
 #endif
+
         for (size_t i = 0; i < 6; i++) {
-            setRow(i);
+            IOHelper::setRow(i);
             delayMicroseconds(3);
             read(inputs, 5 - i);
         }
@@ -129,13 +122,24 @@ void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
 void Tasks::displayUpdateTask(__attribute__((unused)) void *pvParameters) {
     const TickType_t xFrequency = 100 / portTICK_PERIOD_MS;
     TickType_t xLastWakeTime = xTaskGetTickCount();
-    for (size_t _ = 0; _ < 32; _++) {
+    char * control = new char[16];
+#ifdef PROFILING
+    for(size_t _ = 0; _ < 32; _++){
+#else
+    while (true) {
+#endif
         //Update display
         u8g2.clearBuffer();         // clear the internal memory
         u8g2.setFont(u8g2_font_ncenB08_tr); // choose a suitable font
         uint16_t pressed_key_hex = threadSafeArray.read();
         u8g2.setCursor(2, 10);
-        u8g2.print(pressed_key_hex, HEX);
+        if(k3.getRotation() < 10){
+            sprintf(control,"Vol 0%d  Oct %d",k3.getRotation(), k2.getRotation());
+        }
+        else{
+            sprintf(control,"Vol %d  Oct %d",k3.getRotation(), k2.getRotation());
+        }
+        u8g2.print(control);
         u8g2.drawStr(2, 20, NOTES[decode_to_idx(pressed_key_hex)]);
         u8g2.sendBuffer();          // transfer internal memory to the display
 
@@ -143,6 +147,7 @@ void Tasks::displayUpdateTask(__attribute__((unused)) void *pvParameters) {
         digitalToggle(LED_BUILTIN);
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
     }
+    delete control;
 }
 
 void Tasks::decodeTask(__attribute__((unused)) void *pvParameters) {
