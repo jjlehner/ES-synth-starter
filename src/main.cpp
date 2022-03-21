@@ -6,6 +6,7 @@
 #include "Tasks.hpp"
 #include "ES_CAN.h"
 #include "CANFrame.hpp"
+#include "SoundGenerator.hpp"
 
 //Pin definitions
 //Row select and enable
@@ -57,6 +58,7 @@ std::atomic<int32_t> currentStepSize;
 
 //Sound generation
 ThreadSafeList<Note> notesPressed;
+SoundGenerator soundGenerator = SoundGenerator();
 
 //Function to set outputs using key matrix
 void setOutMuxBit(const uint8_t bitIdx, const bool value) {
@@ -188,13 +190,15 @@ void loop() {
 }
 
 void sampleISR() {
-    static int32_t phaseAcc = 0;
-    auto t = notesPressed.read();
-    if(t.second){
-        phaseAcc += t.first[0].getStepSize();
-    }
-    int32_t Vout = phaseAcc >> 24;
-    Vout = Vout >> (8 - k3.getRotation() / 2);
+    // static int32_t phaseAcc = 0;
+    // auto t = notesPressed.read();
+    // if(t.second){
+    //     phaseAcc += t.first[0].getStepSize();
+    // }
+    // int32_t Vout = phaseAcc >> 24;
+    // Vout = Vout >> (8 - k3.getRotation() / 2);
+    // analogWrite(OUTR_PIN, Vout + 128);
+    int32_t Vout = soundGenerator.getSound();
     analogWrite(OUTR_PIN, Vout + 128);
 }
 
