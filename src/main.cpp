@@ -144,7 +144,7 @@ void setup() {
     TaskHandle_t decodeHandler = nullptr;
     TaskHandle_t transmitHandler = nullptr;
 
-    establishPosition();
+    //establishPosition();
     xTaskCreate(Tasks::scanKeysTask,/* Function that implements the task */
                 "scanKeys",/* Text name for the task */
                 256,/* Stack size in words, not bytes*/
@@ -189,7 +189,10 @@ void loop() {
 
 void sampleISR() {
     static int32_t phaseAcc = 0;
-    phaseAcc += currentStepSize;
+    auto t = notesPressed.read();
+    if(t.second){
+        phaseAcc += t.first[0].getStepSize();
+    }
     int32_t Vout = phaseAcc >> 24;
     Vout = Vout >> (8 - k3.getRotation() / 2);
     analogWrite(OUTR_PIN, Vout + 128);

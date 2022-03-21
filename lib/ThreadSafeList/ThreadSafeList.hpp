@@ -13,7 +13,8 @@ class ThreadSafeList {
 private:
     std::list<T> list;
     SemaphoreHandle_t listMutex{};
-    T readISR[36];
+    constexpr static size_t MAX_ISR_READ = 8;
+    std::array<T, MAX_ISR_READ> readISR;
 public:
     ThreadSafeList() = default;
 
@@ -41,18 +42,18 @@ public:
         // xSemaphoreGive(listMutex);
     }
 
-    std::pairstd::list<T> read() {
-        // UBaseType_t uxSavedInterruptStatus = taskENTER_CRITICAL_FROM_ISR();
+    std::pair<std::array<T, 8>, size_t> read() {
+        UBaseType_t uxSavedInterruptStatus = taskENTER_CRITICAL_FROM_ISR();
         // xSemaphoreTakeFromISR(listMutex, portMAX_DELAY);
         size_t i = 0;
         for(T t : list){
-            readISR[i] = t;
+            readISR[i++] = t;
         }
         // static signed BaseType_t xHigherPriorityTaskWoken = pdFALSE;
         // xHigherPriorityTaskWoken = pdFALSE;
         // xSemaphoreGiveFromISR(listMutex, &xHigherPriorityTaskWoken);
-        // taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
-        return readISR;
+        taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
+        return std::pair<std::array<T, MAX_ISR_READ>, size_t>(readISR, i);
     }
 };
 
