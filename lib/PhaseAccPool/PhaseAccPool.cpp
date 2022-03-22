@@ -8,4 +8,4 @@
 
 std::array<bool, PhaseAccPool::PHASE_ACC_POOL_SIZE> PhaseAccPool::phaseAccUsed{};
 std::array<int32_t, PhaseAccPool::PHASE_ACC_POOL_SIZE> PhaseAccPool::phaseAccPool{};
-std::atomic<size_t> PhaseAccPool::accAquired{0};
+
