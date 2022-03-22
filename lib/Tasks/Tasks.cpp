@@ -101,10 +101,15 @@ void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
             }
             if (keyStateChanges[i] == KeyStateChange::PRESSED) {
                 notesPressed.push_back(Note{
-                        static_cast<uint8_t>((keyStateChanges.size() - 1 - i)), 4, micros()});
+                        static_cast<uint8_t>((keyStateChanges.size() - 1 - i)), 4, micros(), PhaseAccPool::aquirePhaseAcc()});
             }
             if (keyStateChanges[i] == KeyStateChange::RELEASED) {
-                notesPressed.remove(Note{static_cast<uint8_t>((keyStateChanges.size() - 1 - i)), 4, 0});
+                auto note = notesPressed.find(Note{static_cast<uint8_t>((keyStateChanges.size() - 1 - i)), 4, 0});
+                while(note.second){
+                    notesPressed.remove(Note{static_cast<uint8_t>((keyStateChanges.size() - 1 - i)), 4, 0});
+                    PhaseAccPool::releasePhaseAcc(note.first.indexPhaseAcc);
+                    note = notesPressed.find(Note{static_cast<uint8_t>((keyStateChanges.size() - 1 - i)), 4, 0});
+                }
             }
         }
         // auto notesToPlay = notesPressed.read();
@@ -139,7 +144,8 @@ void Tasks::displayUpdateTask(__attribute__((unused)) void *pvParameters) {
             sprintf(control,"Vol %d  Oct %d",k3.getRotation(), k2.getRotation());
         }
         u8g2.print(control);
-        u8g2.drawStr(2, 20, NOTES[decode_to_idx(pressed_key_hex)]);
+        //u8g2.drawStr(2, 20, NOTES[decode_to_idx(pressed_key_hex)]);
+        //u8g2.drawStr(2, 20, std::to_string(PhaseAccPool::accAquired).c_str());
         u8g2.sendBuffer();          // transfer internal memory to the display
 
         //Toggle LED
@@ -159,10 +165,12 @@ void Tasks::decodeTask(__attribute__((unused)) void *pvParameters) {
 #endif
         xQueueReceive(msgInQ, RX_Message.data(), portMAX_DELAY);
         auto RX_Frame = CANFrame(RX_Message);
-        auto note = Note{RX_Frame.getNoteNum(), (uint8_t) (RX_Frame.getOctaveNum() + 1)};
+        auto note = Note{RX_Frame.getNoteNum(), (uint8_t) (RX_Frame.getOctaveNum() + 1),micros()};
         if (RX_Frame.getKeyPressed()) {
+            note.indexPhaseAcc = PhaseAccPool::aquirePhaseAcc();
             notesPressed.push_back(note);
         } else {
+            PhaseAccPool::releasePhaseAcc(note.indexPhaseAcc);
             notesPressed.remove(note);
         }
     }

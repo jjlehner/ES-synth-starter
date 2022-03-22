@@ -60,15 +60,16 @@ int32_t SoundGenerator::getSound(){
 
     // return Vout;
     auto notes = notesPressed.read();
-    int32_t stepSize = 0;
+
+    int32_t Vout = 0;
     for(size_t i = 0; i < notes.second ; i++){
-        stepSize += this -> __getSound(notes.first[i]);
+        PhaseAccPool::phaseAccPool[notes.first[i].indexPhaseAcc] += this -> __getSound(notes.first[i]);
+        Vout += PhaseAccPool::phaseAccPool[notes.first[i].indexPhaseAcc] >> 24;
     }
-    if(notes.second){
-        stepSize /= notes.second;
-    }
-    this->phaseAcc += stepSize;
-    int32_t Vout = this->phaseAcc >> 24;
+    //if(notes.second){
+    //    stepSize /= (int32_t) notes.second;
+    //}
+
     Vout = Vout >> (8-k3.getRotation()/2);
     return Vout;
 

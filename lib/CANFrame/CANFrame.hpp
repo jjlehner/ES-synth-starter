@@ -9,6 +9,7 @@
 #include <array>
 #include <ES_CAN.h>
 #include <STM32FreeRTOS.h>
+#include <PhaseAccPool.hpp>
 
 extern QueueHandle_t msgInQ;
 extern QueueHandle_t msgOutQ;
@@ -17,8 +18,13 @@ struct Note {
     uint8_t noteNum;
     uint8_t octaveNum;
     uint32_t timePressed;
+    uint32_t indexPhaseAcc;
 
     int32_t getStepSize();
+
+    void aquirePhaseAcc(){
+        indexPhaseAcc = PhaseAccPool::aquirePhaseAcc();
+    }
 
     bool operator==(const Note &b);
 };

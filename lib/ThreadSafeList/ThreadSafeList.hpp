@@ -6,6 +6,7 @@
 #define ES_SYNTH_STARTER_THREADSAFELIST_HPP
 
 #include <list>
+#include <algorithm>
 #include "STM32FreeRTOS.h"
 
 template<typename T>
@@ -40,6 +41,17 @@ public:
         
         taskEXIT_CRITICAL();
         // xSemaphoreGive(listMutex);
+    }
+
+    std::pair<T, bool> find(const T& val){
+        // xSemaphoreTake(listMutex, portMAX_DELAY);
+        taskENTER_CRITICAL();
+
+        auto it = std::find(list.begin(), list.end(), val);
+        auto returnVal = it != list.end() ? std::pair<T, bool>(*it, true) : std::pair<T, bool>(*list.begin(), false);
+        taskEXIT_CRITICAL();
+        // xSemaphoreGive(listMutex);
+        return returnVal;
     }
 
     std::pair<std::array<T, 8>, size_t> read() {
