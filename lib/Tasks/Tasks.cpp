@@ -11,7 +11,7 @@
 #include "ThreadSafeList.hpp"
 
 namespace {
-    static const char *NOTES[] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "No Key"};
+    static const char *NOTES[] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "No note"};
     typedef uint8_t Switch;
 
     const Switch INDEX_KEY_C = 0;
@@ -127,6 +127,7 @@ void Tasks::displayUpdateTask(__attribute__((unused)) void *pvParameters) {
     const TickType_t xFrequency = 100 / portTICK_PERIOD_MS;
     TickType_t xLastWakeTime = xTaskGetTickCount();
     char * control = new char[16];
+    char * note = new char[16];
 #ifdef PROFILING
     for(size_t _ = 0; _ < 32; _++){
 #else
@@ -138,13 +139,16 @@ void Tasks::displayUpdateTask(__attribute__((unused)) void *pvParameters) {
         uint16_t pressed_key_hex = threadSafeArray.read();
         u8g2.setCursor(2, 10);
         if(k3.getRotation() < 10){
-            sprintf(control,"Vol 0%d  Oct %d",k3.getRotation(), k2.getRotation());
+            sprintf(control,"Vol: 0%d,  Oct: %d",k3.getRotation(), k2.getRotation());
         }
         else{
-            sprintf(control,"Vol %d  Oct %d",k3.getRotation(), k2.getRotation());
+            sprintf(control,"Vol: %d,  Oct: %d",k3.getRotation(), k2.getRotation());
         }
         u8g2.print(control);
-        //u8g2.drawStr(2, 20, NOTES[decode_to_idx(pressed_key_hex)]);
+        u8g2.setCursor(2, 20);
+        sprintf(note, "Note: %s", NOTES[decode_to_idx(pressed_key_hex)]);
+        u8g2.print(note);
+        // u8g2.drawStr(2, 20, NOTES[decode_to_idx(pressed_key_hex)]);
         //u8g2.drawStr(2, 20, std::to_string(PhaseAccPool::accAquired).c_str());
         u8g2.sendBuffer();          // transfer internal memory to the display
 
