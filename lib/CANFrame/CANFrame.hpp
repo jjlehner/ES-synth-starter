@@ -21,6 +21,7 @@ struct Note {
     uint32_t indexPhaseAcc;
 
     int32_t getStepSize();
+    int32_t getFrequency();
 
     void aquirePhaseAcc(){
         indexPhaseAcc = PhaseAccPool::aquirePhaseAcc();

@@ -27,6 +27,20 @@ const static int32_t STEPSIZES[] = {int32_t(pow(2.0, 32.0) * 440.0 * pow(2.0, -9
                                     int32_t(pow(2., 32.) * 440. * pow(2.0, 2. / 12.) / 22000.),
                                     int32_t(0.0)};
 
+const static int32_t frequencies[] = {int32_t(440.0 * pow(2.0, -9. / 12.)),
+                                    int32_t(440.0 * pow(2.0, -8. / 12.)),
+                                    int32_t(440.0 * pow(2.0, -7. / 12.)),
+                                    int32_t(440.0 * pow(2.0, -6. / 12.)),
+                                    int32_t(440.0 * pow(2.0, -5. / 12.)),
+                                    int32_t(440. * pow(2., -4. / 12.)),
+                                    int32_t(440. * pow(2., -3. / 12.)),
+                                    int32_t(440. * pow(2., -2. / 12.)),
+                                    int32_t(440. * pow(2., -1. / 12.)),
+                                    int32_t(440. * pow(2., 0. / 12.)),
+                                    int32_t(440. * pow(2., 1. / 12.)),
+                                    int32_t(440. * pow(2.0, 2. / 12.)),
+                                    int32_t(0.0)};
+
 void CANFrame::send() {
     uint8_t keyPressed = this->keyPressed ? 0x50 : 0x52;
     std::array<uint8_t, 8> frame = {
@@ -65,6 +79,10 @@ int32_t Note::getStepSize() {
     return this->octaveNum > 4 ?
            STEPSIZES[this->noteNum] << (this->octaveNum - 4) :
            STEPSIZES[this->noteNum] >> (4 - this->octaveNum);
+}
+
+int32_t Note::getFrequency() {
+    return frequencies[this->noteNum];
 }
 
 bool Note::operator==(const Note &b) {
