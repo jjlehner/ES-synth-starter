@@ -128,6 +128,7 @@ void Tasks::displayUpdateTask(__attribute__((unused)) void *pvParameters) {
     TickType_t xLastWakeTime = xTaskGetTickCount();
     char * control = new char[16];
     char * note = new char[16];
+    char * waveform = new char[16];
 #ifdef PROFILING
     for(size_t _ = 0; _ < 32; _++){
 #else
@@ -148,6 +149,9 @@ void Tasks::displayUpdateTask(__attribute__((unused)) void *pvParameters) {
         u8g2.setCursor(2, 20);
         sprintf(note, "Note: %s", NOTES[decode_to_idx(pressed_key_hex)]);
         u8g2.print(note);
+        u8g2.setCursor(2, 30);
+        sprintf(waveform, "Waveform: %d (%s)", k1.getRotation(), k1.getRotation()-8 ? "Sine" : "Saw");
+        u8g2.print(waveform);
         // u8g2.drawStr(2, 20, NOTES[decode_to_idx(pressed_key_hex)]);
         //u8g2.drawStr(2, 20, std::to_string(PhaseAccPool::accAquired).c_str());
         u8g2.sendBuffer();          // transfer internal memory to the display
