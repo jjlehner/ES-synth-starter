@@ -157,14 +157,14 @@ void setup() {
 
      xTaskCreate(Tasks::scanKeysTask,/* Function that implements the task */
                  "scanKeys",/* Text name for the task */
-                 96,/* Stack size in words, not bytes*/
+                 256,/* Stack size in words, not bytes*/
                  nullptr,/* Parameter passed into the task */
                  2,/* Task priority*/
                  &scanKeysHandler /* Pointer to store the task handle*/
      );
      xTaskCreate(Tasks::displayUpdateTask,/* Function that implements the task */
                  "displayUpdate",/* Text name for the task */
-                 160,/* Stack size in words, not bytes*/
+                 256,/* Stack size in words, not bytes*/
                  nullptr,/* Parameter passed into the task */
                  1,/* Task priority*/
                  &displayUpdateHandler /* Pointer to store the task handle*/
@@ -237,18 +237,18 @@ void loop() {
 //    char bytes[14];
 //    sprintf(bytes,"%d, %d, %d, %d", k3.getRotation(), k2.getRotation(), k1.getRotation(), k0.getRotation());
 //    Serial.println(bytes);
-    static size_t i = 0;
-    if(i==1000000){
-        i=0;
-        Serial.println(uxTaskGetStackHighWaterMark(scanKeysHandler));
-        Serial.println(uxTaskGetStackHighWaterMark(displayUpdateHandler));
-        Serial.println(uxTaskGetStackHighWaterMark(decodeHandler));
-        Serial.println(uxTaskGetStackHighWaterMark(transmitHandler));
-        Serial.println("");
-    }
-    else{
-        i++;
-    }
+//    static size_t i = 0;
+//    if(i==1000000){
+//        i=0;
+////        Serial.println(uxTaskGetStackHighWaterMark(scanKeysHandler));
+////        Serial.println(uxTaskGetStackHighWaterMark(displayUpdateHandler));
+////        Serial.println(uxTaskGetStackHighWaterMark(decodeHandler));
+////        Serial.println(uxTaskGetStackHighWaterMark(transmitHandler));
+//        Serial.println("");
+//    }
+//    else{
+//        i++;
+//    }
 }
 
 void sampleISR() {
