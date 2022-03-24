@@ -211,7 +211,7 @@ void setup() {
     Tasks::transmitTask(nullptr);
     uint32_t transmitTaskLength = (micros() - starttime)/PROFILING_REPEATS_TRANSMIT_TASK;
 
-    for(size_t i = 0; i<21;i++) {
+    for(size_t i = 0; i<6;i++) {
         notesPressed.push_back(Note{
                 static_cast<uint8_t>(i), 4, micros(), PhaseAccPool::aquirePhaseAcc()});
     }
@@ -221,12 +221,18 @@ void setup() {
     }
     uint32_t sampleISRLength = (micros() - starttime)/PROFILING_REPEATS;
 
+    starttime = micros();
+    for(size_t i = 0; i < 3; i++)
+        CAN_TX_ISR();
+    uint32_t canTXISRLength = (micros() - starttime)/3;
+
     Serial.println("----Results of Profiling----");
     Serial.println(("Scan Key Task           - " + std::to_string(scanKeyTaskLength)).c_str());
     Serial.println(("Display Update Task     - " + std::to_string(displayUpdateTaskLength)).c_str());
     Serial.println(("Message Decode Task     - " + std::to_string(decodeTaskLength)).c_str());
     Serial.println(("Message Transmit Task   - " + std::to_string(transmitTaskLength)).c_str());
     Serial.println(("Sample ISR Length       - " + std::to_string(sampleISRLength)).c_str());
+    Serial.println(("CAN Tx ISR Length       - " + std::to_string(canTXISRLength)).c_str());
 
 #endif
 }
@@ -252,21 +258,14 @@ void loop() {
 }
 
 void sampleISR() {
-    int32_t vOut = 0;
-    switch(Recorder::getState()){
-        case RecorderState::IDLE:
-            vOut = soundGenerator.getSound();
-            analogWrite(OUTR_PIN, vOut + 128);
-            break;
-        case RecorderState::RECORD:
-            vOut = soundGenerator.getSound();
-            analogWrite(OUTR_PIN, vOut + 128);
-            break;
-        case RecorderState::PLAYBACK:
-            break;
-    }
+    int32_t vOut = soundGenerator.getSound();
+    analogWrite(OUTR_PIN, vOut + 128);
 }
 
 void CAN_TX_ISR() {
+#ifdef PROFILING
+    xSemaphoreGive(CAN_TX_Semaphore);
+#else 
     xSemaphoreGiveFromISR(CAN_TX_Semaphore, NULL);
+#endif
 }

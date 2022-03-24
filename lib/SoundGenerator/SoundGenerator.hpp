@@ -8,6 +8,7 @@
 #include "CANFrame.hpp"
 #define _USE_MATH_DEFINES
 #include <cmath>
+#include "config.hpp"
 
 extern volatile Knobs k3;
 extern volatile Knobs k2;
