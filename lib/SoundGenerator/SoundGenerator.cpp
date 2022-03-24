@@ -109,7 +109,8 @@ int32_t SoundGenerator::getSound(){
             Vout += PhaseAccPool::phaseAcc(notes.first[i].indexPhaseAcc) >> 24;
         }
     } else { // Sine
-        for(size_t i = 0; i < notes.second ; i++){
+        size_t upperLim = notes.second > 1 ? 1 : notes.second;
+        for(size_t i = 0; i < upperLim ; i++){
             // PhaseAccPool::setPhaseAcc(notes.first[i].indexPhaseAcc, this -> sine(notes.first[i]));
             Vout = this -> sine(notes.first[i]);
         }
