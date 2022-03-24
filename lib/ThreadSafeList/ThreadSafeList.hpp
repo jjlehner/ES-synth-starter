@@ -15,7 +15,6 @@ class ThreadSafeList {
 private:
     std::list<T> list;
     constexpr static size_t MAX_ISR_READ = 8;
-    std::array<T, MAX_ISR_READ> readISR;
 public:
     ThreadSafeList() = default;
     void push_back(T elem) {
@@ -44,10 +43,14 @@ public:
     }
 
     std::pair<std::array<T, 8>, size_t> read() {
-        UBaseType_t uxSavedInterruptStatus = taskENTER_CRITICAL_FROM_ISR();
+        std::array<T, MAX_ISR_READ> readISR;
         size_t i = 0;
+        UBaseType_t uxSavedInterruptStatus = taskENTER_CRITICAL_FROM_ISR();
         for(T t : list){
             readISR[i++] = t;
+            if(i==8){
+                break;
+            }
         }
         taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
         return std::pair<std::array<T, MAX_ISR_READ>, size_t>(readISR, i);

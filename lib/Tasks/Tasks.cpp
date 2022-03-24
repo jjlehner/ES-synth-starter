@@ -143,9 +143,9 @@ void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
 }
 
 void Tasks::displayUpdateTask(__attribute__((unused)) void *pvParameters) {
-    char * control = new char[16];
-    char * note = new char[16];
-    char * waveform = new char[16];
+    char control[16];
+    char note[16];
+    char waveform[16];
 
 #ifdef PROFILING
     for(size_t _ = 0; _ < PROFILING_REPEATS; _++){
@@ -160,6 +160,7 @@ void Tasks::displayUpdateTask(__attribute__((unused)) void *pvParameters) {
         uint16_t pressed_key_hex = threadSafeArray.read();
         u8g2.setCursor(2, 10);
         if(k3.getRotation() < 10){
+
             sprintf(control,"Vol: 0%d,  Oct: %d",k3.getRotation(), k2.getRotation());
         }
         else{
@@ -167,7 +168,13 @@ void Tasks::displayUpdateTask(__attribute__((unused)) void *pvParameters) {
         }
         u8g2.print(control);
         u8g2.setCursor(2, 20);
-        sprintf(note, "Note: %s", NOTES[decode_to_idx(pressed_key_hex)]);
+        auto key_index = notesPressed.read();
+        if(key_index.second){
+            sprintf(note, "Note: %s", NOTES[key_index.first[0].noteNum]);
+        }
+        else{
+            sprintf(note, "Note:");
+        }
         u8g2.print(note);
         u8g2.setCursor(2, 30);
         sprintf(waveform, "Waveform: %d (%s)", k1.getRotation(), k1.getRotation() < 8 ? "Saw" : "Sine");
@@ -182,9 +189,6 @@ void Tasks::displayUpdateTask(__attribute__((unused)) void *pvParameters) {
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
 #endif
     }
-    delete[] control;
-    delete[] note;
-    delete[] waveform;
 }
 
 void Tasks::decodeTask(__attribute__((unused)) void *pvParameters) {
