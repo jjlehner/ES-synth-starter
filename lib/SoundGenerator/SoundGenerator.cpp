@@ -94,7 +94,7 @@ int32_t SoundGenerator::sine(Note note){
     uint32_t time = micros() - note.timePressed;
     int32_t frequency = note.getFrequency();
     int32_t octave = (int32_t) k2.getRotation();
-    frequency = octave - 4 > 0 ? frequency << (octave -4) : frequency >> (4 - octave);
+    frequency = frequency >> 8-octave;
     size_t idx = (static_cast<size_t> (1024*frequency* time/1e6)) % 1024;
     return raw_sinewave[idx];
 }
