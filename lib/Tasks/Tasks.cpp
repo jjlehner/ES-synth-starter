@@ -30,14 +30,6 @@ namespace {
     const Switch INDEX_KEY_B = 11;
     const Switch INDEX_KEY_NO_KEY = 12;
 
-    inline int shift_n(const int PIN, size_t n) {
-        return digitalRead(PIN) << n;
-    }
-
-    uint8_t readCols() {
-        return shift_n(C0_PIN, 3) + shift_n(C1_PIN, 2) + shift_n(C2_PIN, 1) + shift_n(C3_PIN, 0);
-    }
-
     void read(std::bitset<ThreadSafeArray::NUMBER_OF_INPUTS> &inputs, size_t row) {
         inputs.set(row * 4 + 3, digitalRead(C0_PIN));
         inputs.set(row * 4 + 2, digitalRead(C1_PIN));
@@ -98,6 +90,8 @@ void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
 #ifdef PROFILING
     for(size_t _ = 0; _ < PROFILING_REPEATS; _++){
 #else
+    const TickType_t xFrequency = 20 / portTICK_PERIOD_MS;
+    TickType_t xLastWakeTime = xTaskGetTickCount();
     while (true) {
 #endif
 
@@ -153,15 +147,14 @@ void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
 }
 
 void Tasks::displayUpdateTask(__attribute__((unused)) void *pvParameters) {
-    uint32_t starttime = micros();
-    const TickType_t xFrequency = 100 / portTICK_PERIOD_MS;
-    TickType_t xLastWakeTime = xTaskGetTickCount();
     char * control = new char[16];
     char * note = new char[16];
     char * waveform = new char[16];
 #ifdef PROFILING
     for(size_t _ = 0; _ < PROFILING_REPEATS; _++){
 #else
+    const TickType_t xFrequency = 100 / portTICK_PERIOD_MS;
+    TickType_t xLastWakeTime = xTaskGetTickCount();
     while (true) {
 #endif
         //Update display
@@ -192,9 +185,9 @@ void Tasks::displayUpdateTask(__attribute__((unused)) void *pvParameters) {
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
 #endif
     }
-    delete control;
-    delete note; 
-    delete waveform;
+    delete[] control;
+    delete[] note;
+    delete[] waveform;
 }
 
 void Tasks::decodeTask(__attribute__((unused)) void *pvParameters) {
