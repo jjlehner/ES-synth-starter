@@ -39,10 +39,8 @@ int32_t SoundGenerator::clip(const int32_t inputVolume){
     return inputVolume > 255 ? 255 : inputVolume;
 }
 
-int32_t SoundGenerator::shiftOctave(int32_t stepSize, double octave){
-    octave -= 4.;
-    stepSize *= (int32_t) pow(2.0, octave);
-    return stepSize;
+int32_t SoundGenerator::shiftOctave(int32_t stepSize, int32_t octave){
+    return octave - 4 > 0 ? stepSize << octave -4 : stepSize >> 4 - octave;
 }
 
 SoundGenerator::SoundGenerator() = default;
@@ -50,8 +48,8 @@ SoundGenerator::SoundGenerator() = default;
 int32_t SoundGenerator::sawtooth(Note note){
     uint32_t time = micros() - note.timePressed;
     int32_t stepSize = note.getStepSize();
-    // double octave = (double) k2.getRotation();
-    // stepSize = this->shiftOctave(stepSize, octave);
+    int32_t octave = (int32_t) k2.getRotation();
+    stepSize = this->shiftOctave(stepSize, octave);
     int32_t deltaPhaseAcc = stepSize;
     // deltaPhaseAcc = this->volumeDecay(deltaPhaseAcc, time);
     return deltaPhaseAcc;

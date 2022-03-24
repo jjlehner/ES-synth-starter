@@ -32,7 +32,7 @@ class SoundGenerator{
     private:
         int32_t volumeDecay(int32_t Vin, const int32_t time);
         int32_t clip(const int32_t inputVolume);
-        int32_t shiftOctave(int32_t stepSize, double octave);
+        int32_t shiftOctave(int32_t stepSize, int32_t octave);
         int32_t sawtooth(Note note);
         int32_t sine(Note note);
         uint32_t phaseAcc;
