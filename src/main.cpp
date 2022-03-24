@@ -200,14 +200,14 @@ void setup() {
 
     starttime = micros();
     Tasks::decodeTask(nullptr);
-    uint32_t decodeTaskLength = (micros() - starttime)/PROFILING_REPEATS_TRANSMIT_TASK;
+    uint32_t decodeTaskLength = (micros() - starttime)/PROFILING_REPEATS;
 
     for(int i = 0; i<32;i++){
         xQueueSend(msgOutQ, fakeMessage.data(), NULL);
     }
     starttime = micros();
     Tasks::transmitTask(nullptr);
-    uint32_t transmitTaskLength = (micros() - starttime);
+    uint32_t transmitTaskLength = (micros() - starttime)/PROFILING_REPEATS_TRANSMIT_TASK;
 
     Serial.println("----Results of Profiling----");
     Serial.println(("Scan Key Task           - " + std::to_string(scanKeyTaskLength)).c_str());
