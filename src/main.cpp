@@ -97,6 +97,12 @@ void establishPosition(){
     digitalWrite(OUT_PIN, false);
     Serial.println(devicesSeen);
 }
+
+TaskHandle_t scanKeysHandler = nullptr;
+TaskHandle_t displayUpdateHandler = nullptr;
+TaskHandle_t decodeHandler = nullptr;
+TaskHandle_t transmitHandler = nullptr;
+
 void setup() {
     // put your setup code here, to run once:
     //Initialise UART
@@ -147,38 +153,32 @@ void setup() {
     sampleTimer->attachInterrupt(sampleISR);
     sampleTimer->resume();
 
-    TaskHandle_t scanKeysHandler = nullptr;
-    TaskHandle_t displayUpdateHandler = nullptr;
-    TaskHandle_t decodeHandler = nullptr;
-    TaskHandle_t transmitHandler = nullptr;
-    TaskHandle_t emptyRecordingBufferHandler = nullptr;
-
     //establishPosition();
 
      xTaskCreate(Tasks::scanKeysTask,/* Function that implements the task */
                  "scanKeys",/* Text name for the task */
-                 256,/* Stack size in words, not bytes*/
+                 96,/* Stack size in words, not bytes*/
                  nullptr,/* Parameter passed into the task */
                  2,/* Task priority*/
                  &scanKeysHandler /* Pointer to store the task handle*/
      );
      xTaskCreate(Tasks::displayUpdateTask,/* Function that implements the task */
                  "displayUpdate",/* Text name for the task */
-                 256,/* Stack size in words, not bytes*/
+                 160,/* Stack size in words, not bytes*/
                  nullptr,/* Parameter passed into the task */
                  1,/* Task priority*/
                  &displayUpdateHandler /* Pointer to store the task handle*/
      );
      xTaskCreate(Tasks::decodeTask,
                  "decodeTask",
-                 32,
+                 64,
                  nullptr,
                  3,
                  &decodeHandler
      );
      xTaskCreate(Tasks::transmitTask,
                  "transmitTask",
-                 32,
+                 64,
                  nullptr,
                  3,
                  &transmitHandler
@@ -211,8 +211,10 @@ void setup() {
     Tasks::transmitTask(nullptr);
     uint32_t transmitTaskLength = (micros() - starttime)/PROFILING_REPEATS_TRANSMIT_TASK;
 
-//    notesPressed.push_back(Note{
-//            static_cast<uint8_t>((keyStateChanges.size() - 1 - i)), 4, micros(), PhaseAccPool::aquirePhaseAcc()}
+    for(size_t i = 0; i<21;i++) {
+        notesPressed.push_back(Note{
+                static_cast<uint8_t>(i), 4, micros(), PhaseAccPool::aquirePhaseAcc()});
+    }
     starttime = micros();
     for(int i = 0; i < PROFILING_REPEATS; i++){
         sampleISR();
@@ -226,12 +228,8 @@ void setup() {
     Serial.println(("Message Transmit Task   - " + std::to_string(transmitTaskLength)).c_str());
     Serial.println(("Sample ISR Length       - " + std::to_string(sampleISRLength)).c_str());
 
-    char a[3000];
-    vTaskGetRunTimeStats(a);
-    Serial.println(a);
 #endif
 }
-
 
 void loop() {
     // put your main code here, to run repeatedly:
@@ -239,8 +237,18 @@ void loop() {
 //    char bytes[14];
 //    sprintf(bytes,"%d, %d, %d, %d", k3.getRotation(), k2.getRotation(), k1.getRotation(), k0.getRotation());
 //    Serial.println(bytes);
-
-
+    static size_t i = 0;
+    if(i==1000000){
+        i=0;
+        Serial.println(uxTaskGetStackHighWaterMark(scanKeysHandler));
+        Serial.println(uxTaskGetStackHighWaterMark(displayUpdateHandler));
+        Serial.println(uxTaskGetStackHighWaterMark(decodeHandler));
+        Serial.println(uxTaskGetStackHighWaterMark(transmitHandler));
+        Serial.println("");
+    }
+    else{
+        i++;
+    }
 }
 
 void sampleISR() {

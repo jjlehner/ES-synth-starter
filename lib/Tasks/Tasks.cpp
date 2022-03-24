@@ -80,10 +80,6 @@ std::array<SwitchStateChange, 4> findKnobStateChange(const std::bitset<ThreadSaf
 }
 void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
     notesPressed = ThreadSafeList<Note>();
-    notesPressed.initMutex();
-
-    const TickType_t xFrequency = 20 / portTICK_PERIOD_MS;
-    TickType_t xLastWakeTime = xTaskGetTickCount();
 
     std::bitset<ThreadSafeArray::NUMBER_OF_INPUTS> inputs;
     std::bitset<ThreadSafeArray::NUMBER_OF_INPUTS> old_inputs;
@@ -150,6 +146,7 @@ void Tasks::displayUpdateTask(__attribute__((unused)) void *pvParameters) {
     char * control = new char[16];
     char * note = new char[16];
     char * waveform = new char[16];
+
 #ifdef PROFILING
     for(size_t _ = 0; _ < PROFILING_REPEATS; _++){
 #else
