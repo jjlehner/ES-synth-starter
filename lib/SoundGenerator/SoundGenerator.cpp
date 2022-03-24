@@ -100,9 +100,10 @@ int32_t SoundGenerator::sine(Note note){
 }
 
 int32_t SoundGenerator::getSound(){
-    auto notes = notesPressed.read();
+    auto notes = notesPressed.readISR();
     int16_t waveform = k1.getRotation();
     int32_t Vout = 0;
+#ifndef PROFILING
     if (waveform < 8){ // Sawtooth
         for(size_t i = 0; i < notes.second ; i++){
             PhaseAccPool::setPhaseAcc(notes.first[i].indexPhaseAcc, PhaseAccPool::phaseAcc(notes.first[i].indexPhaseAcc) + this -> sawtooth(notes.first[i]));
@@ -115,6 +116,20 @@ int32_t SoundGenerator::getSound(){
             Vout = this -> sine(notes.first[i]);
         }
     }
+#else
+    #ifdef SINE_PROFILING
+    size_t upperLim = notes.second > 1 ? 1 : notes.second;
+    for(size_t i = 0; i < upperLim ; i++){
+        // PhaseAccPool::setPhaseAcc(notes.first[i].indexPhaseAcc, this -> sine(notes.first[i]));
+        Vout = this -> sine(notes.first[i]);
+    }
+    #else
+    for(size_t i = 0; i < notes.second ; i++){
+            PhaseAccPool::setPhaseAcc(notes.first[i].indexPhaseAcc, PhaseAccPool::phaseAcc(notes.first[i].indexPhaseAcc) + this -> sawtooth(notes.first[i]));
+            Vout += PhaseAccPool::phaseAcc(notes.first[i].indexPhaseAcc) >> 24;
+        }
+    #endif
+#endif
     Vout = Vout >> (8-k3.getRotation()/2);
     return Vout;
 }

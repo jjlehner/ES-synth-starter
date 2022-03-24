@@ -25,7 +25,7 @@ public:
         taskEXIT_CRITICAL();
     }
 
-    void remove(T val) {
+    void remove(const T& val) {
         taskENTER_CRITICAL();
         
         list.remove(val);
@@ -42,7 +42,7 @@ public:
         return returnVal;
     }
 
-    std::pair<std::array<T, 8>, size_t> read() {
+    std::pair<std::array<T, 8>, size_t> readISR() {
         std::array<T, MAX_ISR_READ> readISR;
         size_t i = 0;
         UBaseType_t uxSavedInterruptStatus = taskENTER_CRITICAL_FROM_ISR();

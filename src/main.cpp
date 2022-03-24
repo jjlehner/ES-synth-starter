@@ -1,7 +1,6 @@
 #include <Arduino.h>
 #include <U8g2lib.h>
 #include <STM32FreeRTOS.h>
-#include "ThreadSafeArray.hpp"
 #include "ThreadSafeList.hpp"
 #include "Tasks.hpp"
 #include "ES_CAN.h"
@@ -44,8 +43,6 @@ volatile Knobs k1;
 volatile Knobs k2(0,8);
 volatile Knobs k3;
 
-ThreadSafeArray threadSafeArray;
-
 void sampleISR();
 
 //Display driver object
@@ -54,8 +51,6 @@ U8G2_SSD1305_128X32_NONAME_F_HW_I2C u8g2(U8G2_R0);
 QueueHandle_t msgInQ;
 QueueHandle_t msgOutQ;
 SemaphoreHandle_t CAN_TX_Semaphore;
-
-std::atomic<int32_t> currentStepSize;
 
 //Sound generation
 ThreadSafeList<Note> notesPressed;
@@ -74,29 +69,6 @@ void setOutMuxBit(const uint8_t bitIdx, const bool value) {
 }
 
 void CAN_TX_ISR();
-
-bool boardWest(){
-    return IOHelper::getMatrixValue(5,3);
-}
-void establishPosition(){
-    IOHelper::setRow(6);
-    digitalWrite(OUT_PIN, true);
-    delayMicroseconds(500);
-    uint8_t devicesSeen = 0;
-    std::array<uint8_t, 8> message;
-    bool westMost = boardWest();
-    Serial.println("Started");
-    while(!westMost){
-        xQueueReceive(msgInQ, message.data(), 0);
-        devicesSeen = message[0]+1;
-        westMost = boardWest();
-    }
-    message[0] = devicesSeen;
-    CAN_TX(0x123, message.data());
-    IOHelper::setRow(6);
-    digitalWrite(OUT_PIN, false);
-    Serial.println(devicesSeen);
-}
 
 TaskHandle_t scanKeysHandler = nullptr;
 TaskHandle_t displayUpdateHandler = nullptr;
@@ -143,8 +115,6 @@ void setup() {
     u8g2.begin();
     setOutMuxBit(DEN_BIT, HIGH);  //Enable display power supply
 
-    threadSafeArray.initMutex();
-
     //Start ISR
 #ifndef PROFILING
     TIM_TypeDef *Instance = TIM1;
@@ -159,7 +129,7 @@ void setup() {
                  "scanKeys",/* Text name for the task */
                  256,/* Stack size in words, not bytes*/
                  nullptr,/* Parameter passed into the task */
-                 2,/* Task priority*/
+                 3,/* Task priority*/
                  &scanKeysHandler /* Pointer to store the task handle*/
      );
      xTaskCreate(Tasks::displayUpdateTask,/* Function that implements the task */
@@ -173,14 +143,14 @@ void setup() {
                  "decodeTask",
                  64,
                  nullptr,
-                 3,
+                 2,
                  &decodeHandler
      );
      xTaskCreate(Tasks::transmitTask,
                  "transmitTask",
                  64,
                  nullptr,
-                 3,
+                 2,
                  &transmitHandler
      );
      vTaskStartScheduler();
@@ -195,7 +165,7 @@ void setup() {
     Tasks::displayUpdateTask(nullptr);
     uint32_t displayUpdateTaskLength = (micros() - starttime)/PROFILING_REPEATS;
 
-    std::array<uint8_t,8> fakeMessage = { 0xA,0xB,0xC,0xD,0xA,0xB,0xC,0xD};
+    std::array<uint8_t,8> fakeMessage = { 0x50,0xB,0xC,0xD,0xA,0xB,0xC,0xD};
     for(int i = 0; i<32;i++){
         xQueueSend(msgInQ, fakeMessage.data(), NULL);
     }
@@ -211,7 +181,7 @@ void setup() {
     Tasks::transmitTask(nullptr);
     uint32_t transmitTaskLength = (micros() - starttime)/PROFILING_REPEATS_TRANSMIT_TASK;
 
-    for(size_t i = 0; i<21;i++) {
+    for(size_t i = 0; i<5;i++) {
         notesPressed.push_back(Note{
                 static_cast<uint8_t>(i), 4, micros(), PhaseAccPool::aquirePhaseAcc()});
     }
@@ -221,17 +191,27 @@ void setup() {
     }
     uint32_t sampleISRLength = (micros() - starttime)/PROFILING_REPEATS;
 
+
+    starttime = micros();
+    for(int i = 0; i < PROFILING_REPEATS; i++){
+        //CAN_TX_ISR();
+    }
+    uint32_t CAN_TX_ISR = (micros() - starttime)/PROFILING_REPEATS;
+
     Serial.println("----Results of Profiling----");
     Serial.println(("Scan Key Task           - " + std::to_string(scanKeyTaskLength)).c_str());
     Serial.println(("Display Update Task     - " + std::to_string(displayUpdateTaskLength)).c_str());
     Serial.println(("Message Decode Task     - " + std::to_string(decodeTaskLength)).c_str());
     Serial.println(("Message Transmit Task   - " + std::to_string(transmitTaskLength)).c_str());
     Serial.println(("Sample ISR Length       - " + std::to_string(sampleISRLength)).c_str());
+    Serial.println(("CAN_TX_ISR Length       - " + std::to_string(CAN_TX_ISR)).c_str());
 
 #endif
 }
 
 void loop() {
+
+#ifndef PROFILING
     static size_t i = 0;
     if(i==100000){
         i=0;
@@ -244,6 +224,7 @@ void loop() {
     else{
         i++;
     }
+#endif
 }
 
 void sampleISR() {

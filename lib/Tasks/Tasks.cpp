@@ -3,13 +3,16 @@
 //
 
 #include "Tasks.hpp"
-#include <Arduino.h>
 #include "STM32FreeRTOS.h"
 #include <U8g2lib.h>
 #include <bitset>
 #include "Knobs.hpp"
 #include "ThreadSafeList.hpp"
 #include "Recorder.hpp"
+
+enum class SwitchStateChange {
+    PRESSED, RELEASED, NO_CHANGE
+};
 
 
 namespace {
@@ -30,7 +33,7 @@ namespace {
     const Switch INDEX_KEY_B = 11;
     const Switch INDEX_KEY_NO_KEY = 12;
 
-    void read(std::bitset<ThreadSafeArray::NUMBER_OF_INPUTS> &inputs, size_t row) {
+    void read(std::bitset<IO::FLAT_KEY_MATRIX_LENGTH> &inputs, size_t row) {
         inputs.set(row * 4 + 3, digitalRead(C0_PIN));
         inputs.set(row * 4 + 2, digitalRead(C1_PIN));
         inputs.set(row * 4 + 1, digitalRead(C2_PIN));
@@ -50,11 +53,11 @@ namespace {
     }
 }
 
-std::array<SwitchStateChange, 12> findKeyStateChanges(const std::bitset<ThreadSafeArray::NUMBER_OF_INPUTS> &newKeyArray, const std::bitset<ThreadSafeArray::NUMBER_OF_INPUTS> &oldKeyArray) {
+std::array<SwitchStateChange, 12> findKeyStateChanges(const std::bitset<IO::FLAT_KEY_MATRIX_LENGTH> &newKeyArray, const std::bitset<IO::FLAT_KEY_MATRIX_LENGTH> &oldKeyArray) {
     std::array<SwitchStateChange, 12> keyStateChanges;
     keyStateChanges.fill(SwitchStateChange::NO_CHANGE);
-    auto releasedKeys = (newKeyArray & ~oldKeyArray) >> (ThreadSafeArray::NUMBER_OF_INPUTS-12);
-    auto pressedKeys = (~newKeyArray & oldKeyArray) >> (ThreadSafeArray::NUMBER_OF_INPUTS -12);
+    auto releasedKeys = (newKeyArray & ~oldKeyArray) >> (IO::FLAT_KEY_MATRIX_LENGTH - 12);
+    auto pressedKeys = (~newKeyArray & oldKeyArray) >> (IO::FLAT_KEY_MATRIX_LENGTH - 12);
     for (int i = 0; i < 12; i++) {
         keyStateChanges[i] = releasedKeys[i] ? SwitchStateChange::RELEASED : keyStateChanges[i];
         keyStateChanges[i] = pressedKeys[i] ? SwitchStateChange::PRESSED : keyStateChanges[i];
@@ -62,7 +65,7 @@ std::array<SwitchStateChange, 12> findKeyStateChanges(const std::bitset<ThreadSa
     return keyStateChanges;
 }
 
-std::array<SwitchStateChange, 4> findKnobStateChange(const std::bitset<ThreadSafeArray::NUMBER_OF_INPUTS> &newKeyArray, const std::bitset<ThreadSafeArray::NUMBER_OF_INPUTS> &oldKeyArray){
+std::array<SwitchStateChange, 4> findKnobStateChange(const std::bitset<IO::FLAT_KEY_MATRIX_LENGTH> &newKeyArray, const std::bitset<IO::FLAT_KEY_MATRIX_LENGTH> &oldKeyArray){
     std::array<SwitchStateChange, 4> keyStateChanges;
     keyStateChanges.fill(SwitchStateChange::NO_CHANGE);
     auto releasedKeys = (newKeyArray & ~oldKeyArray);
@@ -81,8 +84,8 @@ std::array<SwitchStateChange, 4> findKnobStateChange(const std::bitset<ThreadSaf
 void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
     notesPressed = ThreadSafeList<Note>();
 
-    std::bitset<ThreadSafeArray::NUMBER_OF_INPUTS> inputs;
-    std::bitset<ThreadSafeArray::NUMBER_OF_INPUTS> old_inputs;
+    std::bitset<IO::FLAT_KEY_MATRIX_LENGTH> inputs;
+    std::bitset<IO::FLAT_KEY_MATRIX_LENGTH> old_inputs;
 #ifdef PROFILING
     for(size_t _ = 0; _ < PROFILING_REPEATS; _++){
 #else
@@ -92,7 +95,7 @@ void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
 #endif
 
         for (size_t i = 0; i < 7; i++) {
-            IOHelper::setRow(i);
+            IO::setRow(i);
             delayMicroseconds(3);
             read(inputs, 6 - i);
         }
@@ -157,7 +160,6 @@ void Tasks::displayUpdateTask(__attribute__((unused)) void *pvParameters) {
         //Update display
         u8g2.clearBuffer();         // clear the internal memory
         u8g2.setFont(u8g2_font_ncenB08_tr); // choose a suitable font
-        uint16_t pressed_key_hex = threadSafeArray.read();
         u8g2.setCursor(2, 10);
         if(k3.getRotation() < 10){
 
@@ -168,7 +170,7 @@ void Tasks::displayUpdateTask(__attribute__((unused)) void *pvParameters) {
         }
         u8g2.print(control);
         u8g2.setCursor(2, 20);
-        auto key_index = notesPressed.read();
+        auto key_index = notesPressed.readISR();
         if(key_index.second){
             sprintf(note, "Note: %s", NOTES[key_index.first[0].noteNum]);
         }
