@@ -95,7 +95,7 @@ int32_t SoundGenerator::sine(Note note){
     int32_t frequency = note.getFrequency();
     int32_t octave = (int32_t) k2.getRotation();
     frequency = octave - 4 > 0 ? frequency << (octave -4) : frequency >> (4 - octave);
-    size_t idx = static_cast<size_t> (1024*frequency* time/1e6) % 1024;
+    size_t idx = (static_cast<size_t> (1024*frequency* time/1e6)) % 1024;
     return raw_sinewave[idx];
 }
 
@@ -109,7 +109,8 @@ int32_t SoundGenerator::getSound(){
             Vout += PhaseAccPool::phaseAcc(notes.first[i].indexPhaseAcc) >> 24;
         }
     } else { // Sine
-        for(size_t i = 0; i < notes.second ; i++){
+        size_t upperLim = notes.second > 1 ? 1 : notes.second;
+        for(size_t i = 0; i < upperLim ; i++){
             // PhaseAccPool::setPhaseAcc(notes.first[i].indexPhaseAcc, this -> sine(notes.first[i]));
             Vout = this -> sine(notes.first[i]);
         }
