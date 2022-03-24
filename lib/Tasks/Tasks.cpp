@@ -161,6 +161,8 @@ void Tasks::displayUpdateTask(__attribute__((unused)) void *pvParameters) {
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
     }
     delete control;
+    delete note; 
+    delete waveform;
 }
 
 void Tasks::decodeTask(__attribute__((unused)) void *pvParameters) {
