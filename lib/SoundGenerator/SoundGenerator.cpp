@@ -31,7 +31,7 @@
 //     return Vout;
 // }
 
-int32_t SoundGenerator::volumeDecay(int32_t Vin, const int32_t time){
+int32_t SoundGenerator::volumeDecay(const int32_t Vin, const int32_t time){
     return (int32_t) Vin*exp(- time/1.0e6);
 }
 
@@ -39,8 +39,8 @@ int32_t SoundGenerator::clip(const int32_t inputVolume){
     return inputVolume > 255 ? 255 : inputVolume;
 }
 
-int32_t SoundGenerator::shiftOctave(int32_t stepSize, int32_t octave){
-    return octave - 4 > 0 ? stepSize << octave -4 : stepSize >> 4 - octave;
+int32_t SoundGenerator::shiftOctave(const int32_t stepSize, const int32_t octave){
+    return octave - 4 > 0 ? stepSize << (octave -4) : stepSize >> (4 - octave);
 }
 
 SoundGenerator::SoundGenerator() = default;
