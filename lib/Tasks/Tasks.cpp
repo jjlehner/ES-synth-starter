@@ -68,7 +68,7 @@ void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
     std::bitset<24> inputs;
 
 #ifdef PROFILING
-    for(size_t _ = 0; _ < 32; _++){
+    for(size_t DEBUG_LOOP_VAR = 0; DEBUG_LOOP_VAR < 1; DEBUG_LOOP_VAR++){
 #else
     while (true) {
 #endif
@@ -119,11 +119,14 @@ void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
         //     currentStepSize.store(0, std::memory_order_relaxed);
         // }
         threadSafeArray.write(inputs);
-        vTaskDelayUntil(&xLastWakeTime, xFrequency);
+        #ifndef PROFILING
+            vTaskDelayUntil(&xLastWakeTime, xFrequency);
+        #endif
     }
 }
 
 void Tasks::displayUpdateTask(__attribute__((unused)) void *pvParameters) {
+    uint32_t starttime = micros();
     const TickType_t xFrequency = 100 / portTICK_PERIOD_MS;
     TickType_t xLastWakeTime = xTaskGetTickCount();
     char * control = new char[16];
@@ -163,6 +166,11 @@ void Tasks::displayUpdateTask(__attribute__((unused)) void *pvParameters) {
     delete control;
     delete note; 
     delete waveform;
+    uint32_t dur = micros() - starttime;
+    char print[14];
+    sprintf(print,"Duration: %u", dur);
+    // Serial.println(dur);
+    delete print;
 }
 
 void Tasks::decodeTask(__attribute__((unused)) void *pvParameters) {

@@ -139,44 +139,50 @@ void setup() {
     TIM_TypeDef *Instance = TIM1;
     auto *sampleTimer = new HardwareTimer(Instance);
     sampleTimer->setOverflow(22000, HERTZ_FORMAT);
-    sampleTimer->attachInterrupt(sampleISR);
+    // sampleTimer->attachInterrupt(sampleISR);
     sampleTimer->resume();
     TaskHandle_t scanKeysHandler = nullptr;
     TaskHandle_t displayUpdateHandler = nullptr;
     TaskHandle_t decodeHandler = nullptr;
     TaskHandle_t transmitHandler = nullptr;
 
-    //establishPosition();
-    xTaskCreate(Tasks::scanKeysTask,/* Function that implements the task */
-                "scanKeys",/* Text name for the task */
-                256,/* Stack size in words, not bytes*/
-                nullptr,/* Parameter passed into the task */
-                2,/* Task priority*/
-                &scanKeysHandler /* Pointer to store the task handle*/
-    );
-    xTaskCreate(Tasks::displayUpdateTask,/* Function that implements the task */
-                "displayUpdate",/* Text name for the task */
-                256,/* Stack size in words, not bytes*/
-                nullptr,/* Parameter passed into the task */
-                1,/* Task priority*/
-                &displayUpdateHandler /* Pointer to store the task handle*/
-    );
-    xTaskCreate(Tasks::decodeTask,
-                "decodeTask",
-                32,
-                nullptr,
-                3,
-                &decodeHandler
-    );
-    xTaskCreate(Tasks::transmitTask,
-                "transmitTask",
-                32,
-                nullptr,
-                3,
-                &transmitHandler
-    );
+    Serial.println("Starting test...");
+    uint32_t starttime = micros();
+    Tasks::scanKeysTask(nullptr);
+    // Serial.println(micros() - starttime);
+    Serial.println("Tested");
 
-    vTaskStartScheduler();
+    //establishPosition();
+    // xTaskCreate(Tasks::scanKeysTask,/* Function that implements the task */
+    //             "scanKeys",/* Text name for the task */
+    //             256,/* Stack size in words, not bytes*/
+    //             nullptr,/* Parameter passed into the task */
+    //             2,/* Task priority*/
+    //             &scanKeysHandler /* Pointer to store the task handle*/
+    // );
+    // xTaskCreate(Tasks::displayUpdateTask,/* Function that implements the task */
+    //             "displayUpdate",/* Text name for the task */
+    //             256,/* Stack size in words, not bytes*/
+    //             nullptr,/* Parameter passed into the task */
+    //             1,/* Task priority*/
+    //             &displayUpdateHandler /* Pointer to store the task handle*/
+    // );
+    // xTaskCreate(Tasks::decodeTask,
+    //             "decodeTask",
+    //             32,
+    //             nullptr,
+    //             3,
+    //             &decodeHandler
+    // );
+    // xTaskCreate(Tasks::transmitTask,
+    //             "transmitTask",
+    //             32,
+    //             nullptr,
+    //             3,
+    //             &transmitHandler
+    // );
+
+    // vTaskStartScheduler();
 
 }
 
