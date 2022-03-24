@@ -211,12 +211,24 @@ void setup() {
     Tasks::transmitTask(nullptr);
     uint32_t transmitTaskLength = (micros() - starttime)/PROFILING_REPEATS_TRANSMIT_TASK;
 
+//    notesPressed.push_back(Note{
+//            static_cast<uint8_t>((keyStateChanges.size() - 1 - i)), 4, micros(), PhaseAccPool::aquirePhaseAcc()}
+    starttime = micros();
+    for(int i = 0; i < PROFILING_REPEATS; i++){
+        sampleISR();
+    }
+    uint32_t sampleISRLength = (micros() - starttime)/PROFILING_REPEATS;
+
     Serial.println("----Results of Profiling----");
     Serial.println(("Scan Key Task           - " + std::to_string(scanKeyTaskLength)).c_str());
     Serial.println(("Display Update Task     - " + std::to_string(displayUpdateTaskLength)).c_str());
     Serial.println(("Message Decode Task     - " + std::to_string(decodeTaskLength)).c_str());
-    Serial.println(("Message Transmitt Task  - " + std::to_string(transmitTaskLength)).c_str());
+    Serial.println(("Message Transmit Task   - " + std::to_string(transmitTaskLength)).c_str());
+    Serial.println(("Sample ISR Length       - " + std::to_string(sampleISRLength)).c_str());
 
+    char a[3000];
+    vTaskGetRunTimeStats(a);
+    Serial.println(a);
 #endif
 }
 
@@ -232,16 +244,7 @@ void loop() {
 }
 
 void sampleISR() {
-    // static int32_t phaseAcc = 0;
-    // auto t = notesPressed.read();
-    // if(t.second){
-    //     phaseAcc += t.first[0].getStepSize();
-    // }
-    // int32_t Vout = phaseAcc >> 24;
-    // Vout = Vout >> (8 - k3.getRotation() / 2);
-    // analogWrite(OUTR_PIN, Vout + 128);
     int32_t vOut = 0;
-
     switch(Recorder::getState()){
         case RecorderState::IDLE:
             vOut = soundGenerator.getSound();
@@ -254,11 +257,6 @@ void sampleISR() {
         case RecorderState::PLAYBACK:
             break;
     }
-
-//    if(Recorder::isIdle()){
-//        int32_t Vout = soundGenerator.getSound();
-//        analogWrite(OUTR_PIN, Vout + 128);
-//    }
 }
 
 void CAN_TX_ISR() {
