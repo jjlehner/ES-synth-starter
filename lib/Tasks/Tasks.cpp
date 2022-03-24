@@ -226,14 +226,3 @@ void Tasks::transmitTask(__attribute__((unused)) void *pvParameters) {
         CAN_TX(0x123, msgOut.data());
     }
 }
-
-void Tasks::emptyRecordingBuffer(__attribute__((unused)) void *pvParameters) {
-    std::array<uint8_t, 8> msgOut;
-#ifdef PROFILING
-    for(size_t _ = 0; _ < 32; _++){
-#else
-    while (true) {
-#endif
-        Recorder::emptyISRSaveBuffer();
-    }
-}

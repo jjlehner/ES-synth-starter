@@ -38,7 +38,6 @@ namespace Tasks {
 
     [[noreturn]] void transmitTask(__attribute__((unused)) void *pvParameters);
 
-    [[noreturn]] void emptyRecordingBuffer(__attribute__((unused)) void *pvParameters);
 }
 
 #endif //ES_SYNTH_STARTER_TASKS_HPP

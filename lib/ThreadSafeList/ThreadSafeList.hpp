@@ -35,25 +35,7 @@ public:
         taskEXIT_CRITICAL();
         // xSemaphoreGive(listMutex);
     }
-    void push_back_ISR(T elem) {
-        // xSemaphoreTake(listMutex, portMAX_DELAY);
-        UBaseType_t uxSavedInterruptStatus = taskENTER_CRITICAL_FROM_ISR();
 
-//        isrSaveBuffer[firstEmptyIndex] = elem;
-        firstEmptyIndex++;
-        firstEmptyIndex = firstEmptyIndex == BUFFER_SIZE ? 0 : firstEmptyIndex;
-        taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
-        // xSemaphoreGive(listMutex);
-    }
-    void emptySaveBuffer(){
-        taskENTER_CRITICAL();
-
-        while(firstEmptyIndex){
-            list.push_back(isrSaveBuffer[firstEmptyIndex--]);
-        }
-        taskEXIT_CRITICAL();
-
-    }
     void remove(T val) {
         // xSemaphoreTake(listMutex, portMAX_DELAY);
         taskENTER_CRITICAL();
@@ -95,13 +77,6 @@ public:
         taskEXIT_CRITICAL();
     }
 
-    void pop_front(){
-        UBaseType_t uxSavedInterruptStatus = taskENTER_CRITICAL_FROM_ISR();
-        if(list.size() > 1){
-            list.pop_front();
-        }
-        taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
-    }
 };
 
 #endif //ES_SYNTH_STARTER_THREADSAFELIST_HPP

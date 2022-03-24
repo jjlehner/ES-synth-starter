@@ -177,13 +177,6 @@ void setup() {
                 3,
                 &transmitHandler
     );
-    xTaskCreate(Tasks::emptyRecordingBuffer,
-                "emptyRecordingBuffer",
-                32,
-                nullptr,
-                1,
-                &emptyRecordingBufferHandler
-    );
 
     vTaskStartScheduler();
 
@@ -217,11 +210,8 @@ void sampleISR() {
         case RecorderState::RECORD:
             vOut = soundGenerator.getSound();
             analogWrite(OUTR_PIN, vOut + 128);
-            Recorder::storeSpeakerOutputVoltageFromISR(vOut+128);
             break;
         case RecorderState::PLAYBACK:
-            vOut = Recorder::getNextNote();
-            analogWrite(OUTR_PIN, vOut);
             break;
     }
 
