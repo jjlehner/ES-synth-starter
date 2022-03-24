@@ -186,7 +186,7 @@ void Tasks::decodeTask(__attribute__((unused)) void *pvParameters) {
 void Tasks::transmitTask(__attribute__((unused)) void *pvParameters) {
     std::array<uint8_t, 8> msgOut;
 #ifdef PROFILING
-    for(size_t _ = 0; _ < PROFILING_REPEATS; _++){
+    for(size_t _ = 0; _ < PROFILING_REPEATS_TRANSMIT_TASK; _++){
 #else
     while (true) {
 #endif

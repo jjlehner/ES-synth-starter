@@ -103,16 +103,13 @@ void setup() {
 
     msgInQ = xQueueCreate(36, 8);
     msgOutQ = xQueueCreate(36, 8);
-#ifndef PROFILING
     CAN_TX_Semaphore = xSemaphoreCreateCounting(3, 3);
     CAN_Init(false);
+#ifndef PROFILING
     CAN_RegisterRX_ISR(CANFrame::receiveISR);
     CAN_RegisterTX_ISR(CAN_TX_ISR);
     setCANFilter(0x123, 0x7ff);
     CAN_Start();
-#endif
-#ifdef PROFILING
-    xQueueSend(msgInQ, { 0xA,0xB,0xC,0xD }, NULL);
 #endif
 
     //Set pin directions
@@ -196,19 +193,27 @@ void setup() {
     Tasks::displayUpdateTask(nullptr);
     uint32_t displayUpdateTaskLength = (micros() - starttime)/PROFILING_REPEATS;
 
+    std::array<uint8_t,8> fakeMessage = { 0xA,0xB,0xC,0xD,0xA,0xB,0xC,0xD};
+    for(int i = 0; i<32;i++){
+        xQueueSend(msgInQ, fakeMessage.data(), NULL);
+    }
+
     starttime = micros();
     Tasks::decodeTask(nullptr);
-    uint32_t decodeTaskLength = (micros() - starttime)/PROFILING_REPEATS;
-//
-////    starttime = micros();
-////    Tasks::transmitTask(nullptr);
-////    uint32_t transmitTaskLength = (micros() - starttime);
+    uint32_t decodeTaskLength = (micros() - starttime)/PROFILING_REPEATS_TRANSMIT_TASK;
+
+    for(int i = 0; i<32;i++){
+        xQueueSend(msgOutQ, fakeMessage.data(), NULL);
+    }
+    starttime = micros();
+    Tasks::transmitTask(nullptr);
+    uint32_t transmitTaskLength = (micros() - starttime);
 
     Serial.println("----Results of Profiling----");
     Serial.println(("Scan Key Task           - " + std::to_string(scanKeyTaskLength)).c_str());
     Serial.println(("Display Update Task     - " + std::to_string(displayUpdateTaskLength)).c_str());
     Serial.println(("Message Decode Task     - " + std::to_string(decodeTaskLength)).c_str());
-//    Serial.println(("Message Transmitt Task  - " + std::to_string(transmitTaskLength)).c_str());
+    Serial.println(("Message Transmitt Task  - " + std::to_string(transmitTaskLength)).c_str());
 
 #endif
 }

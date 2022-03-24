@@ -8,4 +8,5 @@
 #define PROFILING
 
 constexpr size_t PROFILING_REPEATS = 32;
+constexpr size_t PROFILING_REPEATS_TRANSMIT_TASK = 3;
 #endif //ES_SYNTH_STARTER_CONFIG_HPP
