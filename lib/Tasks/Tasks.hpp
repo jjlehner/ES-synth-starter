@@ -5,16 +5,13 @@
 #ifndef ES_SYNTH_STARTER_TASKS_HPP
 #define ES_SYNTH_STARTER_TASKS_HPP
 
-#include "ThreadSafeArray.hpp"
 #include "ThreadSafeList.hpp"
 #include "Knobs.hpp"
 #include "CANFrame.hpp"
 #include "config.hpp"
-#include "IOHelper.hpp"
+#include "IO.hpp"
 #include <U8g2lib.h>
 
-
-extern ThreadSafeArray threadSafeArray;
 
 extern volatile Knobs k0;
 extern volatile Knobs k1;

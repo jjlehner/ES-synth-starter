@@ -2,9 +2,10 @@
 // Created by Jonah Lehner on 18/03/2022.
 //
 
-#ifndef ES_SYNTH_STARTER_IOHELPER_HPP
-#define ES_SYNTH_STARTER_IOHELPER_HPP
+#ifndef ES_SYNTH_STARTER_IO_HPP
+#define ES_SYNTH_STARTER_IO_HPP
 #include <cstdint>
+#include <arduino.h>
 extern const int C0_PIN;
 extern const int C1_PIN;
 extern const int C2_PIN;
@@ -16,7 +17,7 @@ extern const int RA0_PIN;
 extern const int RA1_PIN;
 extern const int RA2_PIN;
 
-struct IOHelper{
+struct IO{
     static void setRow(uint8_t rowIdx) {
         digitalWrite(REN_PIN, LOW);
         digitalWrite(RA0_PIN, rowIdx & 0x1);
@@ -39,7 +40,10 @@ struct IOHelper{
         }
         return false;
     }
+
+    static constexpr size_t FLAT_KEY_MATRIX_LENGTH = 28;
+
 };
 
 
-#endif //ES_SYNTH_STARTER_IOHELPER_HPP
+#endif //ES_SYNTH_STARTER_IO_HPP

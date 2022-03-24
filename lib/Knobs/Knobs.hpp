@@ -8,10 +8,9 @@
 #include <cstdint>
 #include <utility>
 #include <array>
-#include <Arduino.h>
 #include <bitset>
 #include "ClampedCounter.hpp"
-#include "ThreadSafeArray.hpp"
+#include "IO.hpp"
 
 enum class RotationDist : int8_t {
     Negative = -1,
@@ -36,7 +35,7 @@ private:
     };
     static constexpr const unsigned long epsilon = 20;
 public:
-    static inline std::pair<bool, bool> getAB(const std::bitset<ThreadSafeArray::NUMBER_OF_INPUTS> &keyArray, size_t knobIdx) {
+    static inline std::pair<bool, bool> getAB(const std::bitset<IO::FLAT_KEY_MATRIX_LENGTH> &keyArray, size_t knobIdx) {
         bool A = keyArray[9 + 2 * knobIdx];
         bool B = keyArray[8 + 2 * knobIdx];
         return std::make_pair(A, B);
