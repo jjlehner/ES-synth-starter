@@ -13,7 +13,7 @@
 
 
 namespace {
-    static const char *NOTES[] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "No Key"};
+    static const char *NOTES[] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "No note"};
     typedef uint8_t Switch;
 
     const Switch INDEX_KEY_C = 0;
@@ -92,13 +92,11 @@ void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
 
     const TickType_t xFrequency = 20 / portTICK_PERIOD_MS;
     TickType_t xLastWakeTime = xTaskGetTickCount();
-    uint16_t to_be_printed = 0x0;
-    uint16_t prev_to_be_printed = 0x0;
 
     std::bitset<ThreadSafeArray::NUMBER_OF_INPUTS> inputs;
     std::bitset<ThreadSafeArray::NUMBER_OF_INPUTS> old_inputs;
 #ifdef PROFILING
-    for(size_t _ = 0; _ < 32; _++){
+    for(size_t _ = 0; _ < PROFILING_REPEATS; _++){
 #else
     while (true) {
 #endif
@@ -108,11 +106,6 @@ void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
             delayMicroseconds(3);
             read(inputs, 6 - i);
         }
-        to_be_printed = (inputs >> 12).to_ulong();
-
-//        if (prev_to_be_printed ^ to_be_printed) {
-//            Switch keyNum = decode_to_idx(prev_to_be_printed ^ to_be_printed);
-//        }
 
         bool a, b;
         std::tie(a, b) = Knobs::getAB(inputs, 3);
@@ -153,16 +146,21 @@ void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
         }
 
         old_inputs = inputs;
-        vTaskDelayUntil(&xLastWakeTime, xFrequency);
+        #ifndef PROFILING
+            vTaskDelayUntil(&xLastWakeTime, xFrequency);
+        #endif
     }
 }
 
 void Tasks::displayUpdateTask(__attribute__((unused)) void *pvParameters) {
+    uint32_t starttime = micros();
     const TickType_t xFrequency = 100 / portTICK_PERIOD_MS;
     TickType_t xLastWakeTime = xTaskGetTickCount();
     char * control = new char[16];
+    char * note = new char[16];
+    char * waveform = new char[16];
 #ifdef PROFILING
-    for(size_t _ = 0; _ < 32; _++){
+    for(size_t _ = 0; _ < PROFILING_REPEATS; _++){
 #else
     while (true) {
 #endif
@@ -172,29 +170,37 @@ void Tasks::displayUpdateTask(__attribute__((unused)) void *pvParameters) {
         uint16_t pressed_key_hex = threadSafeArray.read();
         u8g2.setCursor(2, 10);
         if(k3.getRotation() < 10){
-            sprintf(control,"Vol 0%d  Oct %d",k3.getRotation(), k2.getRotation());
+            sprintf(control,"Vol: 0%d,  Oct: %d",k3.getRotation(), k2.getRotation());
         }
         else{
-            sprintf(control,"Vol %d  Oct %d",k3.getRotation(), k2.getRotation());
+            sprintf(control,"Vol: %d,  Oct: %d",k3.getRotation(), k2.getRotation());
         }
         u8g2.print(control);
-        //u8g2.drawStr(2, 20, NOTES[decode_to_idx(pressed_key_hex)]);
-
-        u8g2.drawStr(2, 20, Recorder::getStateAsString().c_str());
+        u8g2.setCursor(2, 20);
+        sprintf(note, "Note: %s", NOTES[decode_to_idx(pressed_key_hex)]);
+        u8g2.print(note);
+        u8g2.setCursor(2, 30);
+        sprintf(waveform, "Waveform: %d (%s)", k1.getRotation(), k1.getRotation()-8 ? "Sine" : "Saw");
+        u8g2.print(waveform);
+        // u8g2.drawStr(2, 20, NOTES[decode_to_idx(pressed_key_hex)]);
+        //u8g2.drawStr(2, 20, std::to_string(PhaseAccPool::accAquired).c_str());
         u8g2.sendBuffer();          // transfer internal memory to the display
 
         //Toggle LED
         digitalToggle(LED_BUILTIN);
+#ifndef PROFILING
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
+#endif
     }
     delete control;
+    delete note; 
+    delete waveform;
 }
 
 void Tasks::decodeTask(__attribute__((unused)) void *pvParameters) {
     std::array<uint8_t, 8> RX_Message;
 #ifdef PROFILING
-    uint32_t startTime = micros();
-    for(size_t _ = 0; _ < 32; _++){
+    for(size_t _ = 0; _ < PROFILING_REPEATS; _++){
 #else
     while (true) {
 #endif
@@ -209,15 +215,12 @@ void Tasks::decodeTask(__attribute__((unused)) void *pvParameters) {
             notesPressed.remove(note);
         }
     }
-#ifdef PROFILING
-    Serial.println(micros()-startTime);
-#endif
 }
 
 void Tasks::transmitTask(__attribute__((unused)) void *pvParameters) {
     std::array<uint8_t, 8> msgOut;
 #ifdef PROFILING
-    for(size_t _ = 0; _ < 32; _++){
+    for(size_t _ = 0; _ < PROFILING_REPEATS_TRANSMIT_TASK; _++){
 #else
     while (true) {
 #endif

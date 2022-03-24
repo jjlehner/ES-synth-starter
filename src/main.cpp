@@ -101,14 +101,17 @@ void setup() {
     // put your setup code here, to run once:
     //Initialise UART
     Serial.begin(9600);
+
     msgInQ = xQueueCreate(36, 8);
     msgOutQ = xQueueCreate(36, 8);
     CAN_TX_Semaphore = xSemaphoreCreateCounting(3, 3);
     CAN_Init(false);
+#ifndef PROFILING
     CAN_RegisterRX_ISR(CANFrame::receiveISR);
     CAN_RegisterTX_ISR(CAN_TX_ISR);
     setCANFilter(0x123, 0x7ff);
     CAN_Start();
+#endif
 
     //Set pin directions
     pinMode(RA0_PIN, OUTPUT);
@@ -137,11 +140,13 @@ void setup() {
     threadSafeArray.initMutex();
 
     //Start ISR
+#ifndef PROFILING
     TIM_TypeDef *Instance = TIM1;
     auto *sampleTimer = new HardwareTimer(Instance);
     sampleTimer->setOverflow(22000, HERTZ_FORMAT);
     sampleTimer->attachInterrupt(sampleISR);
     sampleTimer->resume();
+
     TaskHandle_t scanKeysHandler = nullptr;
     TaskHandle_t displayUpdateHandler = nullptr;
     TaskHandle_t decodeHandler = nullptr;
@@ -149,37 +154,70 @@ void setup() {
     TaskHandle_t emptyRecordingBufferHandler = nullptr;
 
     //establishPosition();
-    xTaskCreate(Tasks::scanKeysTask,/* Function that implements the task */
-                "scanKeys",/* Text name for the task */
-                256,/* Stack size in words, not bytes*/
-                nullptr,/* Parameter passed into the task */
-                2,/* Task priority*/
-                &scanKeysHandler /* Pointer to store the task handle*/
-    );
-    xTaskCreate(Tasks::displayUpdateTask,/* Function that implements the task */
-                "displayUpdate",/* Text name for the task */
-                256,/* Stack size in words, not bytes*/
-                nullptr,/* Parameter passed into the task */
-                1,/* Task priority*/
-                &displayUpdateHandler /* Pointer to store the task handle*/
-    );
-    xTaskCreate(Tasks::decodeTask,
-                "decodeTask",
-                32,
-                nullptr,
-                3,
-                &decodeHandler
-    );
-    xTaskCreate(Tasks::transmitTask,
-                "transmitTask",
-                32,
-                nullptr,
-                3,
-                &transmitHandler
-    );
 
-    vTaskStartScheduler();
+     xTaskCreate(Tasks::scanKeysTask,/* Function that implements the task */
+                 "scanKeys",/* Text name for the task */
+                 256,/* Stack size in words, not bytes*/
+                 nullptr,/* Parameter passed into the task */
+                 2,/* Task priority*/
+                 &scanKeysHandler /* Pointer to store the task handle*/
+     );
+     xTaskCreate(Tasks::displayUpdateTask,/* Function that implements the task */
+                 "displayUpdate",/* Text name for the task */
+                 256,/* Stack size in words, not bytes*/
+                 nullptr,/* Parameter passed into the task */
+                 1,/* Task priority*/
+                 &displayUpdateHandler /* Pointer to store the task handle*/
+     );
+     xTaskCreate(Tasks::decodeTask,
+                 "decodeTask",
+                 32,
+                 nullptr,
+                 3,
+                 &decodeHandler
+     );
+     xTaskCreate(Tasks::transmitTask,
+                 "transmitTask",
+                 32,
+                 nullptr,
+                 3,
+                 &transmitHandler
+     );
+     vTaskStartScheduler();
+#endif
 
+#ifdef PROFILING
+    uint32_t starttime = micros();
+    Tasks::scanKeysTask(nullptr);
+    uint32_t scanKeyTaskLength = (micros() - starttime)/PROFILING_REPEATS;
+
+    starttime = micros();
+    Tasks::displayUpdateTask(nullptr);
+    uint32_t displayUpdateTaskLength = (micros() - starttime)/PROFILING_REPEATS;
+
+    std::array<uint8_t,8> fakeMessage = { 0xA,0xB,0xC,0xD,0xA,0xB,0xC,0xD};
+    for(int i = 0; i<32;i++){
+        xQueueSend(msgInQ, fakeMessage.data(), NULL);
+    }
+
+    starttime = micros();
+    Tasks::decodeTask(nullptr);
+    uint32_t decodeTaskLength = (micros() - starttime)/PROFILING_REPEATS;
+
+    for(int i = 0; i<32;i++){
+        xQueueSend(msgOutQ, fakeMessage.data(), NULL);
+    }
+    starttime = micros();
+    Tasks::transmitTask(nullptr);
+    uint32_t transmitTaskLength = (micros() - starttime)/PROFILING_REPEATS_TRANSMIT_TASK;
+
+    Serial.println("----Results of Profiling----");
+    Serial.println(("Scan Key Task           - " + std::to_string(scanKeyTaskLength)).c_str());
+    Serial.println(("Display Update Task     - " + std::to_string(displayUpdateTaskLength)).c_str());
+    Serial.println(("Message Decode Task     - " + std::to_string(decodeTaskLength)).c_str());
+    Serial.println(("Message Transmitt Task  - " + std::to_string(transmitTaskLength)).c_str());
+
+#endif
 }
 
 
@@ -189,6 +227,8 @@ void loop() {
 //    char bytes[14];
 //    sprintf(bytes,"%d, %d, %d, %d", k3.getRotation(), k2.getRotation(), k1.getRotation(), k0.getRotation());
 //    Serial.println(bytes);
+
+
 }
 
 void sampleISR() {
