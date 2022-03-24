@@ -9,6 +9,8 @@
 #include <bitset>
 #include "Knobs.hpp"
 #include "ThreadSafeList.hpp"
+#include "Recorder.hpp"
+
 
 namespace {
     static const char *NOTES[] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "No Key"};
@@ -36,7 +38,7 @@ namespace {
         return shift_n(C0_PIN, 3) + shift_n(C1_PIN, 2) + shift_n(C2_PIN, 1) + shift_n(C3_PIN, 0);
     }
 
-    void read(std::bitset<24> &inputs, size_t row) {
+    void read(std::bitset<ThreadSafeArray::NUMBER_OF_INPUTS> &inputs, size_t row) {
         inputs.set(row * 4 + 3, digitalRead(C0_PIN));
         inputs.set(row * 4 + 2, digitalRead(C1_PIN));
         inputs.set(row * 4 + 1, digitalRead(C2_PIN));
@@ -56,6 +58,34 @@ namespace {
     }
 }
 
+std::array<SwitchStateChange, 12> findKeyStateChanges(const std::bitset<ThreadSafeArray::NUMBER_OF_INPUTS> &newKeyArray, const std::bitset<ThreadSafeArray::NUMBER_OF_INPUTS> &oldKeyArray) {
+    std::array<SwitchStateChange, 12> keyStateChanges;
+    keyStateChanges.fill(SwitchStateChange::NO_CHANGE);
+    auto releasedKeys = (newKeyArray & ~oldKeyArray) >> (ThreadSafeArray::NUMBER_OF_INPUTS-12);
+    auto pressedKeys = (~newKeyArray & oldKeyArray) >> (ThreadSafeArray::NUMBER_OF_INPUTS -12);
+    for (int i = 0; i < 12; i++) {
+        keyStateChanges[i] = releasedKeys[i] ? SwitchStateChange::RELEASED : keyStateChanges[i];
+        keyStateChanges[i] = pressedKeys[i] ? SwitchStateChange::PRESSED : keyStateChanges[i];
+    }
+    return keyStateChanges;
+}
+
+std::array<SwitchStateChange, 4> findKnobStateChange(const std::bitset<ThreadSafeArray::NUMBER_OF_INPUTS> &newKeyArray, const std::bitset<ThreadSafeArray::NUMBER_OF_INPUTS> &oldKeyArray){
+    std::array<SwitchStateChange, 4> keyStateChanges;
+    keyStateChanges.fill(SwitchStateChange::NO_CHANGE);
+    auto releasedKeys = (newKeyArray & ~oldKeyArray);
+    auto pressedKeys = (~newKeyArray & oldKeyArray);
+
+    auto knobIndexs = {3,2,7,6};
+    size_t i = 0;
+    for(auto knobIndex : knobIndexs){
+        keyStateChanges[i] = releasedKeys[knobIndex] ? SwitchStateChange::RELEASED : keyStateChanges[knobIndex];
+        keyStateChanges[i] = pressedKeys[knobIndex] ? SwitchStateChange::PRESSED : keyStateChanges[knobIndex];
+        i++;
+    }
+
+    return keyStateChanges;
+}
 void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
     notesPressed = ThreadSafeList<Note>();
     notesPressed.initMutex();
@@ -65,18 +95,18 @@ void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
     uint16_t to_be_printed = 0x0;
     uint16_t prev_to_be_printed = 0x0;
 
-    std::bitset<24> inputs;
-
+    std::bitset<ThreadSafeArray::NUMBER_OF_INPUTS> inputs;
+    std::bitset<ThreadSafeArray::NUMBER_OF_INPUTS> old_inputs;
 #ifdef PROFILING
     for(size_t _ = 0; _ < 32; _++){
 #else
     while (true) {
 #endif
 
-        for (size_t i = 0; i < 6; i++) {
+        for (size_t i = 0; i < 7; i++) {
             IOHelper::setRow(i);
             delayMicroseconds(3);
-            read(inputs, 5 - i);
+            read(inputs, 6 - i);
         }
         to_be_printed = (inputs >> 12).to_ulong();
 
@@ -94,16 +124,16 @@ void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
         std::tie(a, b) = Knobs::getAB(inputs, 0);
         k0.updateRotation(a, b);
 
-        auto keyStateChanges = threadSafeArray.findKeyStateChanges(inputs);
+        auto keyStateChanges = findKeyStateChanges(inputs, old_inputs);
         for (size_t i = 0; i < keyStateChanges.size(); i++) {
-            if (keyStateChanges[i] != KeyStateChange::NO_CHANGE) {
-                CANFrame(keyStateChanges[i] == KeyStateChange::PRESSED, 4, keyStateChanges.size() - 1 - i).send();
+            if (keyStateChanges[i] != SwitchStateChange::NO_CHANGE) {
+                CANFrame(keyStateChanges[i] == SwitchStateChange::PRESSED, 4, keyStateChanges.size() - 1 - i).send();
             }
-            if (keyStateChanges[i] == KeyStateChange::PRESSED) {
+            if (keyStateChanges[i] == SwitchStateChange::PRESSED) {
                 notesPressed.push_back(Note{
                         static_cast<uint8_t>((keyStateChanges.size() - 1 - i)), 4, micros(), PhaseAccPool::aquirePhaseAcc()});
             }
-            if (keyStateChanges[i] == KeyStateChange::RELEASED) {
+            if (keyStateChanges[i] == SwitchStateChange::RELEASED) {
                 auto note = notesPressed.find(Note{static_cast<uint8_t>((keyStateChanges.size() - 1 - i)), 4, 0});
                 while(note.second){
                     notesPressed.remove(Note{static_cast<uint8_t>((keyStateChanges.size() - 1 - i)), 4, 0});
@@ -112,13 +142,17 @@ void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
                 }
             }
         }
-        // auto notesToPlay = notesPressed.read();
-        // if (notesToPlay.size() >= 1) {
-        //     currentStepSize.store(notesToPlay.front().getStepSize(), std::memory_order_relaxed);
-        // } else {
-        //     currentStepSize.store(0, std::memory_order_relaxed);
-        // }
-        threadSafeArray.write(inputs);
+        auto knobStateChanges = findKnobStateChange(inputs, old_inputs);
+        if(knobStateChanges[0] == SwitchStateChange::PRESSED){
+           if(!Recorder::isRecording()) Recorder::startRecording();
+           else Recorder::stopRecording();
+        }
+        if(knobStateChanges[1] == SwitchStateChange::PRESSED){
+            if(!Recorder::isPlayingback()) Recorder::startPlayback();
+            else Recorder::stopPlayback();
+        }
+
+        old_inputs = inputs;
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
     }
 }
@@ -145,7 +179,8 @@ void Tasks::displayUpdateTask(__attribute__((unused)) void *pvParameters) {
         }
         u8g2.print(control);
         //u8g2.drawStr(2, 20, NOTES[decode_to_idx(pressed_key_hex)]);
-        //u8g2.drawStr(2, 20, std::to_string(PhaseAccPool::accAquired).c_str());
+
+        u8g2.drawStr(2, 20, Recorder::getStateAsString().c_str());
         u8g2.sendBuffer();          // transfer internal memory to the display
 
         //Toggle LED
@@ -189,5 +224,16 @@ void Tasks::transmitTask(__attribute__((unused)) void *pvParameters) {
         xQueueReceive(msgOutQ, msgOut.data(), portMAX_DELAY);
         xSemaphoreTake(CAN_TX_Semaphore, portMAX_DELAY);
         CAN_TX(0x123, msgOut.data());
+    }
+}
+
+void Tasks::emptyRecordingBuffer(__attribute__((unused)) void *pvParameters) {
+    std::array<uint8_t, 8> msgOut;
+#ifdef PROFILING
+    for(size_t _ = 0; _ < 32; _++){
+#else
+    while (true) {
+#endif
+        Recorder::emptyISRSaveBuffer();
     }
 }

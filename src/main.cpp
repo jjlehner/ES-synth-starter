@@ -7,6 +7,7 @@
 #include "ES_CAN.h"
 #include "CANFrame.hpp"
 #include "SoundGenerator.hpp"
+#include "Recorder.hpp"
 
 //Pin definitions
 //Row select and enable
@@ -145,6 +146,7 @@ void setup() {
     TaskHandle_t displayUpdateHandler = nullptr;
     TaskHandle_t decodeHandler = nullptr;
     TaskHandle_t transmitHandler = nullptr;
+    TaskHandle_t emptyRecordingBufferHandler = nullptr;
 
     //establishPosition();
     xTaskCreate(Tasks::scanKeysTask,/* Function that implements the task */
@@ -175,6 +177,13 @@ void setup() {
                 3,
                 &transmitHandler
     );
+    xTaskCreate(Tasks::emptyRecordingBuffer,
+                "emptyRecordingBuffer",
+                32,
+                nullptr,
+                1,
+                &emptyRecordingBufferHandler
+    );
 
     vTaskStartScheduler();
 
@@ -198,8 +207,28 @@ void sampleISR() {
     // int32_t Vout = phaseAcc >> 24;
     // Vout = Vout >> (8 - k3.getRotation() / 2);
     // analogWrite(OUTR_PIN, Vout + 128);
-    int32_t Vout = soundGenerator.getSound();
-    analogWrite(OUTR_PIN, Vout + 128);
+    int32_t vOut = 0;
+
+    switch(Recorder::getState()){
+        case RecorderState::IDLE:
+            vOut = soundGenerator.getSound();
+            analogWrite(OUTR_PIN, vOut + 128);
+            break;
+        case RecorderState::RECORD:
+            vOut = soundGenerator.getSound();
+            analogWrite(OUTR_PIN, vOut + 128);
+            Recorder::storeSpeakerOutputVoltageFromISR(vOut+128);
+            break;
+        case RecorderState::PLAYBACK:
+            vOut = Recorder::getNextNote();
+            analogWrite(OUTR_PIN, vOut);
+            break;
+    }
+
+//    if(Recorder::isIdle()){
+//        int32_t Vout = soundGenerator.getSound();
+//        analogWrite(OUTR_PIN, Vout + 128);
+//    }
 }
 
 void CAN_TX_ISR() {

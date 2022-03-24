@@ -13,6 +13,7 @@
 #include "IOHelper.hpp"
 #include <U8g2lib.h>
 
+
 extern ThreadSafeArray threadSafeArray;
 
 extern volatile Knobs k0;
@@ -36,6 +37,8 @@ namespace Tasks {
     [[noreturn]] void decodeTask(__attribute__((unused)) void *pvParameters);
 
     [[noreturn]] void transmitTask(__attribute__((unused)) void *pvParameters);
+
+    [[noreturn]] void emptyRecordingBuffer(__attribute__((unused)) void *pvParameters);
 }
 
 #endif //ES_SYNTH_STARTER_TASKS_HPP

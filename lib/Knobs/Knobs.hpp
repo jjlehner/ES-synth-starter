@@ -11,6 +11,7 @@
 #include <Arduino.h>
 #include <bitset>
 #include "ClampedCounter.hpp"
+#include "ThreadSafeArray.hpp"
 
 enum class RotationDist : int8_t {
     Negative = -1,
@@ -35,9 +36,9 @@ private:
     };
     static constexpr const unsigned long epsilon = 20;
 public:
-    static inline std::pair<bool, bool> getAB(const std::bitset<24> &keyArray, size_t knobIdx) {
-        bool A = keyArray[5 + 2 * knobIdx];
-        bool B = keyArray[4 + 2 * knobIdx];
+    static inline std::pair<bool, bool> getAB(const std::bitset<ThreadSafeArray::NUMBER_OF_INPUTS> &keyArray, size_t knobIdx) {
+        bool A = keyArray[9 + 2 * knobIdx];
+        bool B = keyArray[8 + 2 * knobIdx];
         return std::make_pair(A, B);
     }
 

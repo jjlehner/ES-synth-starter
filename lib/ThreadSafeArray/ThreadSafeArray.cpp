@@ -17,21 +17,21 @@ uint16_t ThreadSafeArray::read() {
     return comb;
 }
 
-void ThreadSafeArray::write(const std::bitset<24> &keyArray) {
+void ThreadSafeArray::write(const std::bitset<NUMBER_OF_INPUTS> &keyArray) {
     xSemaphoreTake(keyArrayMutex, portMAX_DELAY);
     buff = keyArray;
     xSemaphoreGive(keyArrayMutex);
 }
 
-std::array<KeyStateChange, 12>
-ThreadSafeArray::findKeyStateChanges(const std::bitset<24> &newKeyArray) {
-    std::array<KeyStateChange, 12> keyStateChanges;
-    keyStateChanges.fill(KeyStateChange::NO_CHANGE);
-    auto releasedKeys = (newKeyArray & ~buff) >> 12;
-    auto pressedKeys = (~newKeyArray & buff) >> 12;
+std::array<SwitchStateChange, 12>
+ThreadSafeArray::findKeyStateChanges(const std::bitset<NUMBER_OF_INPUTS> &newKeyArray) {
+    std::array<SwitchStateChange, 12> keyStateChanges;
+    keyStateChanges.fill(SwitchStateChange::NO_CHANGE);
+    auto releasedKeys = (newKeyArray & ~buff) >> (NUMBER_OF_INPUTS-12);
+    auto pressedKeys = (~newKeyArray & buff) >> (NUMBER_OF_INPUTS -12);
     for (int i = 0; i < 12; i++) {
-        keyStateChanges[i] = releasedKeys[i] ? KeyStateChange::RELEASED : keyStateChanges[i];
-        keyStateChanges[i] = pressedKeys[i] ? KeyStateChange::PRESSED : keyStateChanges[i];
+        keyStateChanges[i] = releasedKeys[i] ? SwitchStateChange::RELEASED : keyStateChanges[i];
+        keyStateChanges[i] = pressedKeys[i] ? SwitchStateChange::PRESSED : keyStateChanges[i];
     }
     return keyStateChanges;
 }
