@@ -62,13 +62,11 @@ void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
 
     const TickType_t xFrequency = 20 / portTICK_PERIOD_MS;
     TickType_t xLastWakeTime = xTaskGetTickCount();
-    uint16_t to_be_printed = 0x0;
-    uint16_t prev_to_be_printed = 0x0;
 
     std::bitset<24> inputs;
 
 #ifdef PROFILING
-    for(size_t DEBUG_LOOP_VAR = 0; DEBUG_LOOP_VAR < 1; DEBUG_LOOP_VAR++){
+    for(size_t _ = 0; _ < PROFILING_REPEATS; _++){
 #else
     while (true) {
 #endif
@@ -78,11 +76,6 @@ void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
             delayMicroseconds(3);
             read(inputs, 5 - i);
         }
-        to_be_printed = (inputs >> 12).to_ulong();
-
-//        if (prev_to_be_printed ^ to_be_printed) {
-//            Switch keyNum = decode_to_idx(prev_to_be_printed ^ to_be_printed);
-//        }
 
         bool a, b;
         std::tie(a, b) = Knobs::getAB(inputs, 3);
@@ -133,7 +126,7 @@ void Tasks::displayUpdateTask(__attribute__((unused)) void *pvParameters) {
     char * note = new char[16];
     char * waveform = new char[16];
 #ifdef PROFILING
-    for(size_t _ = 0; _ < 32; _++){
+    for(size_t _ = 0; _ < PROFILING_REPEATS; _++){
 #else
     while (true) {
 #endif
@@ -161,23 +154,19 @@ void Tasks::displayUpdateTask(__attribute__((unused)) void *pvParameters) {
 
         //Toggle LED
         digitalToggle(LED_BUILTIN);
+#ifndef PROFILING
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
+#endif
     }
     delete control;
     delete note; 
     delete waveform;
-    uint32_t dur = micros() - starttime;
-    char print[14];
-    sprintf(print,"Duration: %u", dur);
-    // Serial.println(dur);
-    delete print;
 }
 
 void Tasks::decodeTask(__attribute__((unused)) void *pvParameters) {
     std::array<uint8_t, 8> RX_Message;
 #ifdef PROFILING
-    uint32_t startTime = micros();
-    for(size_t _ = 0; _ < 32; _++){
+    for(size_t _ = 0; _ < PROFILING_REPEATS; _++){
 #else
     while (true) {
 #endif
@@ -192,15 +181,12 @@ void Tasks::decodeTask(__attribute__((unused)) void *pvParameters) {
             notesPressed.remove(note);
         }
     }
-#ifdef PROFILING
-    Serial.println(micros()-startTime);
-#endif
 }
 
 void Tasks::transmitTask(__attribute__((unused)) void *pvParameters) {
     std::array<uint8_t, 8> msgOut;
 #ifdef PROFILING
-    for(size_t _ = 0; _ < 32; _++){
+    for(size_t _ = 0; _ < PROFILING_REPEATS; _++){
 #else
     while (true) {
 #endif

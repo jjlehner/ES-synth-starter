@@ -29,6 +29,15 @@ extern ThreadSafeList<Note> notesPressed;
 
 extern SemaphoreHandle_t CAN_TX_Semaphore;
 namespace Tasks {
+#ifdef PROFILING
+     void scanKeysTask(__attribute__((unused)) void *pvParameters);
+
+     void displayUpdateTask(__attribute__((unused)) void *pvParameters);
+
+     void decodeTask(__attribute__((unused)) void *pvParameters);
+
+     void transmitTask(__attribute__((unused)) void *pvParameters);
+#else
     [[noreturn]] void scanKeysTask(__attribute__((unused)) void *pvParameters);
 
     [[noreturn]] void displayUpdateTask(__attribute__((unused)) void *pvParameters);
@@ -36,6 +45,7 @@ namespace Tasks {
     [[noreturn]] void decodeTask(__attribute__((unused)) void *pvParameters);
 
     [[noreturn]] void transmitTask(__attribute__((unused)) void *pvParameters);
+#endif
 }
 
 #endif //ES_SYNTH_STARTER_TASKS_HPP
