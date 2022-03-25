@@ -1,10 +1,9 @@
-<style>body {text-align: justify}</style>
 # JBMN Systems Music Synthesiser
 
 A music synthesiser created by JBMN Systems, consisting of
 
 | Name | Shortcode|
-| --- | ---- |
+| :--- | ---- |
 |Jonah Lehner  | jjl119 |
 |Bertil de Germay de Cirfontaine | bd519 |
 |Martin Lindström | ml3621 |
