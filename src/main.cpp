@@ -80,8 +80,8 @@ void setup() {
     //Initialise UART
     Serial.begin(9600);
 
-    msgInQ = xQueueCreate(256, 8);
-    msgOutQ = xQueueCreate(256, 8);
+    msgInQ = xQueueCreate(36, 8);
+    msgOutQ = xQueueCreate(36, 8);
     CAN_TX_Semaphore = xSemaphoreCreateCounting(3, 3);
     CAN_Init(false);
 #ifndef PROFILING
