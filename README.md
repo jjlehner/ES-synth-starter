@@ -9,4 +9,4 @@ This repository details the implementation of the **JBMN Systems Music Synthesis
 |Martin Lindström | ml3621 |
 |Neel Dugar | nd419 |
 
-The main documentation can be found [here](doc/report.md),
+The main documentation can be found [here](doc/report.md).
