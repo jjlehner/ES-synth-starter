@@ -5,7 +5,7 @@
 #ifndef ES_SYNTH_STARTER_IO_HPP
 #define ES_SYNTH_STARTER_IO_HPP
 #include <cstdint>
-#include <arduino.h>
+#include <Arduino.h>
 extern const int C0_PIN;
 extern const int C1_PIN;
 extern const int C2_PIN;
