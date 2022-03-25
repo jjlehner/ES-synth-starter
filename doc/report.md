@@ -1,7 +1,14 @@
 
-<center>JBMN Systems Music Synthesiser</center>
-<center>Jonah Lehner (jjl119) Martin Lindström (ml3621) </center>
-<center>Bertil de Germay de Cirfontaine (bd519) Neel Dugar (nd419) </center>
+# JBMN Systems Music Synthesiser
+
+A music synthesiser created by JBMN Systems, consisting of
+
+| Name | Shortcode|
+| :--- | ---- |
+|Jonah Lehner  | jjl119 |
+|Bertil de Germay de Cirfontaine | bd519 |
+|Martin Lindström | ml3621 |
+|Neel Dugar | nd419 |
 
 # Important Notes
 
