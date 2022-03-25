@@ -1,6 +1,6 @@
-# ThreadSafeList\<T>
+# [ThreadSafeList\<T>](../lib/ThreadSafeList/ThreadSafeList.hpp)
 
-A wrapper around a generic list\<T> which ensures that a list can be accessed by multiple tasks and an interrupt service routine without race conditions and deadlocks. The member functions of ThreadSafeList are chosen to be the same as for the standard list container. One difference between ThreadSafeList and List is that the readISR function must be called from an interrupt service routine. ThreadSafeList does not use semaphores, rather it wraps list mutations in critical sections. This allows the ThreadSafeList type to be used within interrupt service routines. 
+A wrapper around a generic list\<T> which ensures that a list can be accessed by multiple tasks and an interrupt service routine without race conditions and deadlocks. The names of the member functions are chosen to be the same as for the standard list container. One difference between ThreadSafeList and List is that the readISR function must be called from an interrupt service routine. ThreadSafeList does not use semaphores, rather it wraps list mutations in critical sections. This allows the ThreadSafeList type to be used within interrupt service routines. 
 
 # Methods
 

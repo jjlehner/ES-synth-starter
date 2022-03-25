@@ -1,6 +1,6 @@
-# Phase Accumulation Pool
+# [Phase Accumulation Pool](../lib/PhaseAccPool/PhaseAccPool.hpp)
 
-A helper class to which wraps 36 static phase accumulators required for polyphony. The class provides the function ```aquirePhaseAcc``` for the scanKeysTask and DecodeTask to dynamically associate pressed notes with entries in the accumulator array. The class also provides the function ```releasePhaseAcc``` to disassociate notes with entires in the accumulator array. The function ```setPhaseAcc``` and ```getPhaseAcc``` are used in the Sample interrupt and SoundGenerator class to generate the voltage output for the speaker. All these functions can be used safely concurrently as they wrap modifications of shared data in critical sections.
+A helper class which wraps 36 static phase accumulators required for polyphony. The class provides the function ```aquirePhaseAcc``` for the scanKeysTask and DecodeTask to dynamically associate pressed notes with entries in the accumulator array. The class also provides the function ```releasePhaseAcc``` to disassociate notes with entires in the accumulator array. The function ```setPhaseAcc``` and ```getPhaseAcc``` are used in the Sample interrupt and SoundGenerator class to generate the voltage output for the speaker. All these functions can be used safely concurrently as they wrap modifications of shared data in critical sections.
 
 # Functions
 

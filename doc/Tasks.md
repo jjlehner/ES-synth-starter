@@ -2,7 +2,7 @@
 
 The synthesiser uses six distinct tasks that are performed with either an interrupt or a thread.
 
-## Threads 
+## [Threads](../lib/Tasks/Tasks.hpp) 
 ### Scan Keys - Priority 3
 - This thread goes through the keyboard matrix and determines which keys have been pressed. The latter are stored locally in a global keysPressed ThreadSafeList type. This thread is also responsible for sending announcements of when a key is pressed and released to the message output queue.
 ### Message Decode - Priority 2
