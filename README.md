@@ -1,6 +1,9 @@
 # ES-synth-starter
 
-  Use this project as the starting point for your Embedded Systems labs and coursework.
+This repository details the implementation of the **JBMN Systems Music Synthesiser**, implemented by 
+Jonah Lehner (jjl119)
+Bertil de Germay de Cirfontaine (bd519)
+Martin Lindström (ml3621)
+Neel Dugar (nd419)
 
-## Additional Information
-  [Handshaking and auto-detection](doc/handshaking.md)
+The main documentation can be found [here](doc/report.md),

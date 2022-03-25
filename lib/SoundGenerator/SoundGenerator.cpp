@@ -84,7 +84,7 @@ SoundGenerator::SoundGenerator() = default;
 int32_t SoundGenerator::sawtooth(Note note){
     uint32_t time = micros() - note.timePressed;
     int32_t stepSize = note.getStepSize();
-    int32_t octave = (int32_t) k2.getRotation();
+    int32_t octave = note.octaveNum;
     stepSize = this->shiftOctave(stepSize, octave);
     int32_t deltaPhaseAcc = stepSize;
     return deltaPhaseAcc;
@@ -93,7 +93,7 @@ int32_t SoundGenerator::sawtooth(Note note){
 int32_t SoundGenerator::sine(Note note){
     uint32_t time = micros() - note.timePressed;
     int32_t frequency = note.getFrequency();
-    int32_t octave = (int32_t) k2.getRotation();
+    int32_t octave = note.octaveNum;
     frequency = frequency >> 8-octave;
     size_t idx = (static_cast<size_t> (1024*frequency* time/1e6)) % 1024;
     return raw_sinewave[idx];

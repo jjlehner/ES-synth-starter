@@ -113,18 +113,18 @@ void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
         auto keyStateChanges = findKeyStateChanges(inputs, old_inputs);
         for (size_t i = 0; i < keyStateChanges.size(); i++) {
             if (keyStateChanges[i] != SwitchStateChange::NO_CHANGE) {
-                CANFrame(keyStateChanges[i] == SwitchStateChange::PRESSED, 4, keyStateChanges.size() - 1 - i).send();
+                CANFrame(keyStateChanges[i] == SwitchStateChange::PRESSED, k2.getRotation(), keyStateChanges.size() - 1 - i).send();
             }
             if (keyStateChanges[i] == SwitchStateChange::PRESSED) {
                 notesPressed.push_back(Note{
-                        static_cast<uint8_t>((keyStateChanges.size() - 1 - i)), 4, micros(), PhaseAccPool::aquirePhaseAcc()});
+                        static_cast<uint8_t>((keyStateChanges.size() - 1 - i)), (uint8_t) k2.getRotation(), micros(), PhaseAccPool::aquirePhaseAcc()});
             }
             if (keyStateChanges[i] == SwitchStateChange::RELEASED) {
-                auto note = notesPressed.find(Note{static_cast<uint8_t>((keyStateChanges.size() - 1 - i)), 4, 0});
+                auto note = notesPressed.find(Note{static_cast<uint8_t>((keyStateChanges.size() - 1 - i)), (uint8_t) k2.getRotation(), 0});
                 while(note.second){
-                    notesPressed.remove(Note{static_cast<uint8_t>((keyStateChanges.size() - 1 - i)), 4, 0});
+                    notesPressed.remove(Note{static_cast<uint8_t>((keyStateChanges.size() - 1 - i)), (uint8_t) note.first.octaveNum, 0});
                     PhaseAccPool::releasePhaseAcc(note.first.indexPhaseAcc);
-                    note = notesPressed.find(Note{static_cast<uint8_t>((keyStateChanges.size() - 1 - i)), 4, 0});
+                    note = notesPressed.find(Note{static_cast<uint8_t>((keyStateChanges.size() - 1 - i)), (uint8_t) note.first.octaveNum, 0});
                 }
             }
         }
@@ -202,7 +202,7 @@ void Tasks::decodeTask(__attribute__((unused)) void *pvParameters) {
 #endif
         xQueueReceive(msgInQ, RX_Message.data(), portMAX_DELAY);
         auto RX_Frame = CANFrame(RX_Message);
-        auto note = Note{RX_Frame.getNoteNum(), (uint8_t) (RX_Frame.getOctaveNum() + 1),micros()};
+        auto note = Note{RX_Frame.getNoteNum(), (uint8_t) (RX_Frame.getOctaveNum()),micros()};
         if (RX_Frame.getKeyPressed()) {
             note.indexPhaseAcc = PhaseAccPool::aquirePhaseAcc();
             notesPressed.push_back(note);
