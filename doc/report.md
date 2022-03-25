@@ -23,16 +23,27 @@ In this file:
 - Advanced Features
 
 Library Documentation In Other Files:
- - [ListSafeList\<T> Markdown File](ThreadSafeList.md) - details how safe concurrent data access is achieved.
- - [Tasks Markdown File](Tasks.md) - details the tasks and how they are implemented
-
-
+ - [ThreadSafeList\<T>](ThreadSafeList.md) - details how safe concurrent data access is achieved.
+ - [Tasks](Tasks.md) - details the tasks and how they are implemented
+- [CAN Frame](CANFrame.md)
+- [Knob](Knob.md)
+- [SoundGenerator](SoundGenerator.md)
+- [Clamped Counter](ClampedCounter.md)
+- [Phase Accumulator Pool](PhaseAccPool.md)
 
 # Application  of  Real-Time  Programming Techniques
 The tasks of the music synthesiser must appear to operate in parallel which can be achieved through threading and interrupts - FreeRTOS enables a threading model to be easily implemented by using Tasks and a task scheduler to achieve this, and a hardware timer for interrupts is given by the standard Arduino library. 
 
 ## Threading
 In our implementation, the threaded tasks are defined in the Tasks library with each task being started within the setup of the main thread to improve maintainability of the codebase. Each task is initiated by the setup with a predefined and tuned stack size by use of the FreeRTOS macro `uxTaskGetStackHighWaterMark`, which helps determining the minimum unused memory throughout the runtime. Each task operates its own well defined functionality, this is divided up into the `scanKeysTask`,`displayUpdateTask`,`decodeTask` and `transmitTask`. 
+
+| Task | Stack Size /32 bit words |
+|--|--|
+|scanKeys| 128|
+|displayUpdate| 256 |
+|decodeTask| 64|
+|transmit Task| 64|
+
 
 The `scanKeysTask` reads the values directly from the input "keyMatrix" and produces a `std::bitset` with the values flat-packed, which is then used to detect localised key state changes to enable efficient transmission by pushing these changes to a ThreadSafeList data-structure which makes use of a critical section to enable safe concurrent access, the task also updates values stored in the global Knob objects for their specific rotation.
 
@@ -53,7 +64,7 @@ A global list named 'KeysPressed' was required to contain which keys were being 
 
 ### Inter-Task Blocking
 
-The `ThreadSafeList` `notePressed` is shared between the SampleISR interrupt and three tasks: ScanKey Task, UpdateDisplay Take and the Decode Task. The `ThreadSafeList` prevents both race conditions and deadlock by wrapping list mutations in critical section block. Using mutexs in this data structure would not allow the type to be accessed in both interrupts and threads, as an interrupt could not yield to a thread holding a lock on the underlying list type causing deadlock. Critical section overcome the potential deadlock of mutexs in this situation by disabling interrupts and context switches for short sections of code. In essence this makes short sections of code atomic as by calling ```taskENTER_CRITICAL()``` FreeRTOS guarantees a critical section will remain in the running state until the critical section is exited.
+The `ThreadSafeList` `notePressed` is shared between the SampleISR interrupt and three tasks: ScanKey Task, UpdateDisplay Take and the Decode Task. The `ThreadSafeList` prevents both race conditions and deadlock by wrapping list mutations in critical section block. Using muteces in this data structure would not allow the type to be accessed in both interrupts and threads, as an interrupt could not yield to a thread holding a lock on the underlying list type causing deadlock. Critical section overcome the potential deadlock of muteces in this situation by disabling interrupts and context switches for short sections of code. In essence this makes short sections of code atomic as by calling ```taskENTER_CRITICAL()``` FreeRTOS guarantees a critical section will remain in the running state until the critical section is exited by calling ```taskEXIT_CRITICAL()```.
 
 # Execution Times, Initiation Intervals & CPU Utilisation
 Execution Time (ET) is defined as the time spent using processing resources (the CPU) by a task (block of code) in a thread. Initiation Interval (II) is the time taken between sequential initiations of said task.
@@ -94,19 +105,25 @@ Message Transmit    | 2   | 60        | 0.011   | 0.022   | 0.02   |
 Display Update      | 1   | 100       | 16.667  | 16.67   | 16.67  | 
 Total               |     |           |         | 96.65   | 96.61  |
 
-We can observe from the above table that the Latency Ln (column 5) is always smaller than the initiation time (100ms) of the lowest priority task (Display Update). This leads, by critical instant analysis, to our schedule working.
+
+We can observe from the above table that the Latency Ln (column 5) is always smaller than the initiation time (100ms) of the lowest priority task (Display Update). This shows, by critical instant analysis, that our scheduling works.
+<center>$L_n = \left\lceil \dfrac{\tau_n}{\tau_i}\right\rceil T_i \le \tau_n$</center>
+
 
 # Advanced Features
-We have implemented two advanced features: polyphony, and variable waveform generation. These features have been implemented by multiple people in parallel, with the aim of producing readable and maintainable code. To this end, our code is object-oriented, which makes interfacing with the code simple for people who have not written it. This implies we have made a small trade-off between execution speed, by wrapping objects around core functionality, in favour of readability and maintainability. One such example is in the `SoundGenerator` class, which provides a single interface for sound generation, regardless if multiple keyboards are connected, how many keys are pressed, which waveform is selected, and at which octave the sound should be played. It is simple to, for example, add an other possible waveform. 
+Polyphony, and variable waveform generation have been implemented by multiple people in parallel, with the aim of producing readable and maintainable code. To this end, we structured our code based on the object-oriented method. This makes interfacing with the code simple for people who have not written it. In that regard, we have opted for a small trade-off between execution speed, by wrapping objects around core functionality, in favour of readability and maintainability. One such example is the `SoundGenerator` class providing a single interface for sound generation, regardless of if multiple keyboards are connected, how many keys are pressed, which waveform is selected, and at which octave the sound should be played. It would be simple to, for example, add an other possible waveform. 
 
-The implemented advanced features enhance the system's functionality since they provide additional functionality to produce music. Note that the speakers of the music synthesiser are poor, and thus play a poor sine wave, but that the sound is better using headphones. 
+Those advanced features enhance the system's functionality by providing additional methods to produce music. Please note that the speakers of the music synthesiser are poor, and thus do not adapt well to sine waves, the sound can, however, be perceived better using headphones. 
 
-If we had more time, and the hardware had more resources (see the critical instant analysis above), we would have implemented the following functionality:
+If we had more time, and the hardware had more resources (see the critical instant analysis above), we would have implemented the following functionalities:
 - Additional waveforms. The modularity of the system means that if we have a high resolution waveform in memory (see example for a sine wave below), the system can easily be modified to utilise this functionality.
-- Support for pressing more keys at the same time. At the moment, this is restricted in software to conserver system resources, but this requires removing one line of code to reverse. 
-- Recording and replay functionality. By recording the duration which keys were pressed, their sound can be saved at a relatively small memory cost. Replayed notes can then use the existing API for replaying the sounds. 
+- Support for pressing more keys at the same time. At the moment, this is restricted in software to conserve system resources, but this requires removing one line of code to reverse. 
+- Recording and replay functionalities. By recording the duration which keys were pressed, their sound can be saved at a relatively small memory cost. Replayed notes can then use the existing API for replaying the sounds. 
 
 ## Polyphony
+
+To perform polyphony, the synthesiser must associate a phase accumulator with each key that is being pressed. Voltage output to the speaker is then calculated by summing each phase accumulator to superimpose the waveforms of all the notes being pressed. To save memory and remove processing time associated with allocating memory, 36 phase accumulators are declared in a static array at the beginning of the program. When a key is pressed, a PhaseAccumulatorPool helper class dynamically assigns one of entry in the accumulator array to store the phase accumulation of a note. Once the same key is released the accumulator pool frees the entry in the array so that another note can be assigned to it. See here for more detailed documentation of the [PhaseAccumulator Pool](PhaseAccPool.md). 
+ 
 ## Sine Wave/Saw Tooth  
  The user can choose in real-time to either play with a sawtooth wave or a sine wave through knob 1 (the second knob from the right). A sine wave with $K$ values over a period is given by $g[n] = \sin(2\pi \frac{1}{K} n)$ for $n\in\{1, 2, ..., K\}$. For a large $K$, $g[n]$ is high resolution and a good approximation of a continuous sine. A sine wave $\sin(2\pi f t)$ with frequency $f$ at time $t$ can then be extracted from $g$ by setting $n = K f t \mod K$. We can exploit the periodicity the sine, i.e. $g[n+m] = g[n]$ if $m$ is a multiple of $K$, to generate an infinite sine wave from a single period. In our case, $g$ was generated with the following code (and scaled to  maximum value $128=256/2$):
 ```python

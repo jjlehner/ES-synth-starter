@@ -38,10 +38,10 @@ const int HKOE_BIT = 6;
 
 volatile uint8_t TX_Message[8] = {0};
 
-volatile Knobs k0;
-volatile Knobs k1;
-volatile Knobs k2(0,8);
-volatile Knobs k3;
+volatile Knob k0;
+volatile Knob k1;
+volatile Knob k2(0, 8);
+volatile Knob k3;
 
 void sampleISR();
 
@@ -127,7 +127,7 @@ void setup() {
 
      xTaskCreate(Tasks::scanKeysTask,/* Function that implements the task */
                  "scanKeys",/* Text name for the task */
-                 256,/* Stack size in words, not bytes*/
+                 128,/* Stack size in words, not bytes*/
                  nullptr,/* Parameter passed into the task */
                  3,/* Task priority*/
                  &scanKeysHandler /* Pointer to store the task handle*/

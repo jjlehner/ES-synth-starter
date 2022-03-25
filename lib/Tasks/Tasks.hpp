@@ -6,17 +6,17 @@
 #define ES_SYNTH_STARTER_TASKS_HPP
 
 #include "ThreadSafeList.hpp"
-#include "Knobs.hpp"
+#include "Knob.hpp"
 #include "CANFrame.hpp"
 #include "config.hpp"
 #include "IO.hpp"
 #include <U8g2lib.h>
 
 
-extern volatile Knobs k0;
-extern volatile Knobs k1;
-extern volatile Knobs k2;
-extern volatile Knobs k3;
+extern volatile Knob k0;
+extern volatile Knob k1;
+extern volatile Knob k2;
+extern volatile Knob k3;
 
 extern U8G2_SSD1305_128X32_NONAME_F_HW_I2C u8g2;
 

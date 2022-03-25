@@ -6,7 +6,7 @@
 #include "STM32FreeRTOS.h"
 #include <U8g2lib.h>
 #include <bitset>
-#include "Knobs.hpp"
+#include "Knob.hpp"
 #include "ThreadSafeList.hpp"
 #include "Recorder.hpp"
 
@@ -101,13 +101,13 @@ void Tasks::scanKeysTask(__attribute__((unused)) void *pvParameters) {
         }
 
         bool a, b;
-        std::tie(a, b) = Knobs::getAB(inputs, 3);
+        std::tie(a, b) = Knob::getAB(inputs, 3);
         k3.updateRotation(a, b);
-        std::tie(a, b) = Knobs::getAB(inputs, 2);
+        std::tie(a, b) = Knob::getAB(inputs, 2);
         k2.updateRotation(a, b);
-        std::tie(a, b) = Knobs::getAB(inputs, 1);
+        std::tie(a, b) = Knob::getAB(inputs, 1);
         k1.updateRotation(a, b);
-        std::tie(a, b) = Knobs::getAB(inputs, 0);
+        std::tie(a, b) = Knob::getAB(inputs, 0);
         k0.updateRotation(a, b);
 
         auto keyStateChanges = findKeyStateChanges(inputs, old_inputs);

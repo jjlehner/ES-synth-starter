@@ -2,9 +2,9 @@
 // Created by Neel on 11/03/2022.
 //
 
-#include "Knobs.hpp"
+#include "Knob.hpp"
 
-void Knobs::updateRotation(bool newA, bool newB) volatile {
+void Knob::updateRotation(bool newA, bool newB) volatile {
     int rowIndex = ((uint8_t) prevB << 1) + prevA;
     int colIndex = ((uint8_t) newB << 1) + newA;
     if (millis() - timeSinceDirStart > epsilon) {
@@ -42,10 +42,10 @@ void Knobs::updateRotation(bool newA, bool newB) volatile {
     prevB = newB;
 }
 
-size_t Knobs::getRotation() volatile {
+size_t Knob::getRotation() volatile {
     return rotation.getInternalCounter();
 }
 
-Knobs::Knobs(size_t min, size_t max) : rotation(min, max), timeSinceDirStart(millis()){}
+Knob::Knob(size_t min, size_t max) : rotation(min, max), timeSinceDirStart(millis()){}
 
-constexpr const RotationDist Knobs::rotationDist[4][4];
+constexpr const RotationDist Knob::rotationDist[4][4];

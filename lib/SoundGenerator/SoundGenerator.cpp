@@ -67,14 +67,6 @@ const int32_t raw_sinewave[1024] = {
         -13,-12,-11,-10,-10,-9,-8,-7,-7,-6,-5,-4,-3,-3,-2,-1,0
     };
 
-int32_t SoundGenerator::volumeDecay(const int32_t Vin, const int32_t time){
-    return (int32_t) Vin*exp(- time/1.0e6);
-}
-
-int32_t SoundGenerator::clip(const int32_t inputVolume){
-    return inputVolume > 255 ? 255 : inputVolume;
-}
-
 int32_t SoundGenerator::shiftOctave(const int32_t stepSize, const int32_t octave){
     return octave - 4 > 0 ? stepSize << (octave -4) : stepSize >> (4 - octave);
 }
@@ -115,8 +107,10 @@ int32_t SoundGenerator::getSound(){
         size_t upperLim = notes.second > 4 ? 4 : notes.second;
 #endif
         for(size_t i = 0; i < upperLim ; i++){
-            PhaseAccPool::setPhaseAcc(notes.first[i].indexPhaseAcc, PhaseAccPool::phaseAcc(notes.first[i].indexPhaseAcc) + this -> sawtooth(notes.first[i]));
-            Vout += PhaseAccPool::phaseAcc(notes.first[i].indexPhaseAcc) >> 24;
+            PhaseAccPool::setPhaseAcc(notes.first[i].indexPhaseAcc,
+                                      PhaseAccPool::getPhaseAcc(notes.first[i].indexPhaseAcc) + this -> sawtooth(notes.first[i])
+                                      );
+            Vout += PhaseAccPool::getPhaseAcc(notes.first[i].indexPhaseAcc) >> 24;
         }
     } else { // Sine
 #ifdef PROFILING
@@ -143,6 +137,11 @@ int32_t SoundGenerator::getSound(){
         }
     #endif
 #endif
-    Vout = Vout >> (8-k3.getRotation()/2);
+    if(k3.getRotation()==0) {
+        Vout = 0;
+    }
+    else {
+        Vout = Vout >> (8-k3.getRotation()/2);
+    }
     return Vout;
 }

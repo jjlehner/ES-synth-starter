@@ -42,7 +42,7 @@ public:
         taskEXIT_CRITICAL();
     }
 
-    static int32_t phaseAcc(const size_t& index){
+    static int32_t getPhaseAcc(const size_t& index){
         UBaseType_t uxSavedInterruptStatus = taskENTER_CRITICAL_FROM_ISR();
         auto retVal= phaseAccPool[index];
         taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);

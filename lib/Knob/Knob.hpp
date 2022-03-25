@@ -2,8 +2,8 @@
 // Created by Neel on 11/03/2022.
 //
 
-#ifndef ES_SYNTH_STARTER_KNOBS_HPP
-#define ES_SYNTH_STARTER_KNOBS_HPP
+#ifndef ES_SYNTH_STARTER_KNOB_HPP
+#define ES_SYNTH_STARTER_KNOB_HPP
 
 #include <cstdint>
 #include <utility>
@@ -19,7 +19,7 @@ enum class RotationDist : int8_t {
     Impossible = 127,
 };
 
-class Knobs {
+class Knob {
 private:
     bool prevA = false;
     bool prevB = false;
@@ -41,11 +41,11 @@ public:
         return std::make_pair(A, B);
     }
 
-    Knobs(size_t min=0, size_t max=16);
+    Knob(size_t min=0, size_t max=16);
 
     void updateRotation(bool newA, bool newB) volatile;
 
     size_t getRotation() volatile;
 };
 
-#endif //ES_SYNTH_STARTER_KNOBS_HPP
+#endif //ES_SYNTH_STARTER_KNOB_HPP
