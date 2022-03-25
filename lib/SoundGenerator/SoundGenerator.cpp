@@ -100,7 +100,7 @@ int32_t SoundGenerator::getSound(){
 #endif
     int32_t Vout = 0;
 #ifndef PROFILING
-    if (waveform < 8){ // Sawtooth
+    if (waveform < 11){ // Sawtooth
 #ifdef PROFILING
         size_t upperLim = notes.second;
 #else

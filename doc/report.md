@@ -11,8 +11,8 @@ A music synthesiser created by JBMN Systems, consisting of
 
 # Important Notes
 
-- Please View Markdown inside VS Code to see equation rendering
-
+- Do not change octave while holding key
+- Sine mode should run in octave six and above.
 # Contents
 In this file:
 - Threading
@@ -25,8 +25,8 @@ In this file:
 - Advanced Features
 
 Library Documentation In Other Files:
-- [ThreadSafeList\<T>](ThreadSafeList.md) - details how safe concurrent data access is achieved.
-- [Tasks](Tasks.md) - details the tasks and how they are implemented
+- [ThreadSafeList\<T>](ThreadSafeList.md) 
+- [Tasks](Tasks.md)
 - [CAN Frame](CANFrame.md) 
 - [Knob](Knob.md)
 - [SoundGenerator](SoundGenerator.md)
@@ -114,11 +114,11 @@ Display Update      | 1   | 100       | 16.667  | 16.67   | 16.67  | µ
 Total               |     |           |         | 96.65   | 96.61  |
 
 
-We can observe from the above tables that the latency L<sub>n</sub> (calculated applying [*] to column five) is always smaller than the initiation time (&tau;<sub>n</sub> = 100ms) of the lowest priority task (Display Update). This critical instant analysis shows that our scheduling works.
+We can observe from the above tables that the latency L<sub>n</sub> (calculated applying (*) to column five) is always smaller than the initiation time (&tau;<sub>n</sub> = 100ms) of the lowest priority task (Display Update). This critical instant analysis shows that our scheduling works.
 
 <center>
 L<sub>n</sub> = &sum;<sub>i</sub> &lceil;<sup>&tau;<sub>n</sub></sup>&#8260;<sub>&tau;<sub>i</sub></sub>&rceil; T<sub>i</sub> &le; &tau;<sub>n</sub> 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [*]
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (*)
 </center> 
 
 
