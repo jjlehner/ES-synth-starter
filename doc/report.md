@@ -23,8 +23,8 @@ In this file:
 - Advanced Features
 
 Library Documentation In Other Files:
- - [ListSafeList\<T> Markdown File](ThreadSafeList.md)
- - [CANFrame] 
+ - [ListSafeList\<T> Markdown File](ThreadSafeList.md) - details how safe concurrent data access is achieved.
+ - [Tasks Markdown File](Tasks.md) - details the tasks and how they are implemented
 
 
 
@@ -97,9 +97,18 @@ Total               |     |           |         | 96.65   | 96.61  |
 We can observe from the above table that the Latency Ln (column 5) is always smaller than the initiation time (100ms) of the lowest priority task (Display Update). This leads, by critical instant analysis, to our schedule working.
 
 # Advanced Features
+We have implemented two advanced features: polyphony, and variable waveform generation. These features have been implemented by multiple people in parallel, with the aim of producing readable and maintainable code. To this end, our code is object-oriented, which makes interfacing with the code simple for people who have not written it. This implies we have made a small trade-off between execution speed, by wrapping objects around core functionality, in favour of readability and maintainability. One such example is in the `SoundGenerator` class, which provides a single interface for sound generation, regardless if multiple keyboards are connected, how many keys are pressed, which waveform is selected, and at which octave the sound should be played. It is simple to, for example, add an other possible waveform. 
+
+The implemented advanced features enhance the system's functionality since they provide additional functionality to produce music. Note that the speakers of the music synthesiser are poor, and thus play a poor sine wave, but that the sound is better using headphones. 
+
+If we had more time, and the hardware had more resources (see the critical instant analysis above), we would have implemented the following functionality:
+- Additional waveforms. The modularity of the system means that if we have a high resolution waveform in memory (see example for a sine wave below), the system can easily be modified to utilise this functionality.
+- Support for pressing more keys at the same time. At the moment, this is restricted in software to conserver system resources, but this requires removing one line of code to reverse. 
+- Recording and replay functionality. By recording the duration which keys were pressed, their sound can be saved at a relatively small memory cost. Replayed notes can then use the existing API for replaying the sounds. 
+
 ## Polyphony
 ## Sine Wave/Saw Tooth  
- The user can choose in real-time to either play with a sawtooth wave or a sine wave through knob 1 (the second knob from the right). A sine wave with $K$ values over a period is given by $g[n] = \sin(2\pi \frac{1}{K} n)$ for $n\in\{1, 2, ..., K\}$. For a large $K$, $g[n]$ is high resolution and a good approximation of a continuous sine. A sine wave $\sin(2\pi f t)$ with frequency $f$ at time $t$ can then be extracted from $g$ by setting $n = K f t \mod K$. We can exploit the periodicity the sine, i.e. $g[n+m] = g[n]$ if $m$ is a multiple of $K$, to generate an infinite sine wave from a single period. In our case, $g$ was generated with the following code (and scaled to maximum value $128=256/2$):
+ The user can choose in real-time to either play with a sawtooth wave or a sine wave through knob 1 (the second knob from the right). A sine wave with $K$ values over a period is given by $g[n] = \sin(2\pi \frac{1}{K} n)$ for $n\in\{1, 2, ..., K\}$. For a large $K$, $g[n]$ is high resolution and a good approximation of a continuous sine. A sine wave $\sin(2\pi f t)$ with frequency $f$ at time $t$ can then be extracted from $g$ by setting $n = K f t \mod K$. We can exploit the periodicity the sine, i.e. $g[n+m] = g[n]$ if $m$ is a multiple of $K$, to generate an infinite sine wave from a single period. In our case, $g$ was generated with the following code (and scaled to  maximum value $128=256/2$):
 ```python
 import numpy as np
 K = 1024
@@ -110,6 +119,6 @@ for i in range(ts.shape[0]):
 wave = wave.astype(np.int32)
 np.savetxt("sine_wave", wave[None,:], delimiter=',', fmt='%i', newline="")
 ```
-Note that since $\sin(x) = -\sin(x+\pi)$, the memory requirement can be halved at the cost of a larger computational load. In fact, since computational resources in the ISR were scarce, we decided to store a full period in memory to save on some computations. 
+Note that since $\sin(x) = -\sin(x+\pi)$, the memory requirement can be halved at the cost of a larger computational load. In fact, since computational resources in the ISR were scarce, we decided to store a full period in memory to save on some computations. Moreover, note that we can provide a better sine approximation by increasing $K$, but it was found experimentally that values above $250$ provided little improvement - the speaker was not good enough to determine that one waveform was better than another.
 
 Moreover, the time variable can be acquired through the _micros()_ function, which is built-in to the Arduino. The documentation for this function reveals that it overflows after around 70 minutes, however it is unlikely that a human would depress a single key continuously for more than a few seconds at a time, allowing us to discard this limitation.
